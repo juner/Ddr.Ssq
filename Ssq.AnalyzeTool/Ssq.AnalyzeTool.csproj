@@ -5,9 +5,11 @@
     <TargetFramework>net5.0</TargetFramework>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>ssqcheck</ToolCommandName>
+    <UserSecretsId>5fa307e2-419b-4725-9ceb-578b6e72c6d1</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="ConsoleAppFramework" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ssq\Ssq.csproj" />

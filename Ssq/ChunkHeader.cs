@@ -24,7 +24,7 @@ namespace Ssq
             set => Param = (short)((Param & 0xff00) | (((short)value) & 0xff));
         }
 
-        private string GetDebuggerDisplay()
+        internal readonly string GetDebuggerDisplay()
         {
             IEnumerable<string?> members = new[] {
                 Length<=0 ? null: $"{nameof(Length)}:{Length}",

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Ssq.AnalyzeTool": {
+      "commandName": "Project",
+      "commandLineArgs": "\"..\\abso.ssq\" --Environment Development --contentRoot $(SolutionDir)"
+    }
+  }
+}
