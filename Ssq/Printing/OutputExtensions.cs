@@ -35,6 +35,7 @@ namespace Ssq.Printing
                         => $"[param : ({Chunk.Header.Param:X4}) {Chunk.Header.Param:D4}] {string.Empty.PadLeft(14)}",
                     ChunkType.StepData
                         => $"[level : ({Chunk.Header.Param:X04}) {Chunk.Header.Param:D04} {Chunk.Header.PlayStyle.ToMemberName().PadLeft(8)} {Chunk.Header.PlayDifficulty.ToMemberName().PadLeft(10)}]",
+                    _
                         => $"[param : ({Chunk.Header.Param:X4}) {Chunk.Header.Param:D4}] {string.Empty.PadLeft(14)}",
                 });
                 Writer.Write($"[Entry: {Chunk.Header.Entry:D4} ({Chunk.Header.Entry:X4})]");

@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.targets = Directory.Build.targets
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ssq.AnalyzeTool", "Ssq.AnalyzeTool\Ssq.AnalyzeTool.csproj", "{DE9B8803-1312-4215-93E0-9C861E7096DE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,6 +24,10 @@ Global
 		{CFFCB0B9-77A7-4E67-8B1B-523494966FAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CFFCB0B9-77A7-4E67-8B1B-523494966FAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CFFCB0B9-77A7-4E67-8B1B-523494966FAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE9B8803-1312-4215-93E0-9C861E7096DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE9B8803-1312-4215-93E0-9C861E7096DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE9B8803-1312-4215-93E0-9C861E7096DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE9B8803-1312-4215-93E0-9C861E7096DE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
