@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -40,8 +41,7 @@ namespace Ssq
             {
                 var span = buffer.AsSpan();
                 var readed = Stream.Read(span);
-                if (readed != headerSize)
-                    throw new InvalidOperationException();
+                Debug.Assert(readed != headerSize, "header size invalid.");
                 return MemoryMarshal.Read<ChunkHeader>(span);
             }
             finally
@@ -74,8 +74,7 @@ namespace Ssq
                 case ChunkType.StepData:
                     {
                         Size += Entry * sizeof(uint);
-                        if (Size > Length)
-                            throw new InvalidOperationException("over size exception.");
+                        Debug.Assert(Size > Length, "over size exception.");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
                         var TimeOffsets = new uint[Entry];
                         for (var i = 0; i < Entry; i++)
@@ -93,8 +92,7 @@ namespace Ssq
                 case ChunkType.Tempo_TFPS_Config:
                     {
                         Size += Entry * sizeof(int);
-                        if (Size > Length)
-                            throw new InvalidOperationException("over size exception.");
+                        Debug.Assert(Size > Length, "over size exception.");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
                         var Tempo_TFPS_Config = new int[Entry];
                         for (var i = 0; i < Entry; i++)
@@ -107,8 +105,7 @@ namespace Ssq
                 case ChunkType.Bigin_Finish_Config:
                     {
                         Size += Entry * sizeof(short);
-                        if (Size > Length)
-                            throw new InvalidOperationException("over size exception.");
+                        Debug.Assert(Size > Length, "over size exception.");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
                         var Bigin_Finish_Config = new short[Entry];
                         for (var i = 0; i < Entry; i++)
@@ -121,8 +118,7 @@ namespace Ssq
                 case ChunkType.StepData:
                     {
                         Size += Entry * sizeof(byte);
-                        if (Size > Length)
-                            throw new InvalidOperationException("over size exception.");
+                        Debug.Assert(Size > Length, "over size exception.");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
                         var StepData = new byte[Entry];
                         for (var i = 0; i < Entry; i++)
@@ -135,8 +131,7 @@ namespace Ssq
                 default:
                     {
                         Size += Entry * sizeof(byte);
-                        if (Size > Length)
-                            throw new InvalidOperationException("over size exception.");
+                        Debug.Assert(Size > Length, "over size exception.");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
                         var OtherData = new byte[Entry];
                         for (var i = 0; i < Entry; i++)
