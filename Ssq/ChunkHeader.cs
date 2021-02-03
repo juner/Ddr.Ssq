@@ -10,6 +10,7 @@ namespace Ssq
     public struct ChunkHeader
     {
         public int Length;
+        [MarshalAs(UnmanagedType.I2)]
         public ChunkType Type;
         public short Param;
         public int Entry;

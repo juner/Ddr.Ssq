@@ -2,11 +2,11 @@
   "profiles": {
     "Ssq.AnalyzeTool (file / Env:Development)": {
       "commandName": "Project",
-      "commandLineArgs": "\"..\\abso.ssq\" --Environment Development --contentRoot $(SolutionDir)"
+      "commandLineArgs": "\"..\\abso.ssq\" --Environment Development --contentRoot \"$(SolutionDir)"
     },
     "Ssq.AnalyzeTool (file / Env:Production)": {
       "commandName": "Project",
-      "commandLineArgs": "\"..\\abso.ssq\" --Environment Production --contentRoot $(SolutionDir)"
+      "commandLineArgs": "\"..\\abso.ssq\" --Environment Production --contentRoot \"$(SolutionDir)"
     }
   }
 }

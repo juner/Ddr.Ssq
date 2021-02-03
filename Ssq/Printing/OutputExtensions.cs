@@ -19,9 +19,7 @@ namespace Ssq.Printing
         {
             const string BORDER = "+----+------+--------------+-------------------------+-----------------------------------+------------------+";
             const string HEADER = "|#   |Addr: |Length:( HEX )|Chunk type:              |Values                             |Entry             |";
-            Writer.WriteLine(BORDER);
-            Writer.WriteLine(HEADER);
-            Writer.WriteLine(BORDER);
+            Writer.WriteLine($"{BORDER}{Environment.NewLine}{HEADER}{Environment.NewLine}{BORDER}");
             foreach (var (Chunk, Index) in Chunks.Select((v, i) => (v, i)))
             {
                 Writer.Write($"[{Index + 1:d3}]");
@@ -53,6 +51,7 @@ namespace Ssq.Printing
         /// <param name="Chunk"></param>
         public static void WriteChunkBodyInfo(this TextWriter Writer, Chunk Chunk)
         {
+
             throw new NotImplementedException();
         }
     }

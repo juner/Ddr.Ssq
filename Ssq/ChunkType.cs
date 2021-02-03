@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 
 namespace Ssq
 {
-    public enum ChunkType
+    public enum ChunkType:short
     {
         [EnumMember(Value = "End of File.")]
         EndOfFile = 0,

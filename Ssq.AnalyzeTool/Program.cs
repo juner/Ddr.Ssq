@@ -35,7 +35,8 @@ namespace Ssq.AnalyzeTool
 
         readonly IHostEnvironment Environment;
         readonly ILogger<Program> Logger;
-        public Program(IHostEnvironment Environment, ILogger<Program> Logger, IConfiguration Configuration)
+        readonly ILoggerFactory LoggerFactory;
+        public Program(IHostEnvironment Environment, ILogger<Program> Logger, IConfiguration Configuration, ILoggerFactory LoggerFactory)
         {
             Console.WriteLine(@"
 ##############################################################
@@ -44,6 +45,7 @@ namespace Ssq.AnalyzeTool
 ");
             this.Environment = Environment;
             this.Logger = Logger;
+            this.LoggerFactory = LoggerFactory;
             {
                 Logger.LogDebug(nameof(Environment) + ":");
                 using var b = Logger.BeginScope(nameof(Environment));
@@ -69,7 +71,11 @@ namespace Ssq.AnalyzeTool
                 return 9;
             }
             using var Stream = new FileStream(FileName, FileMode.Open, FileAccess.Read);
-            using var Reader = new ChunkReader(Stream, true, Logger);
+            using var _Stream = new BufferedStream(Stream);
+            using var Reader = new ChunkReader(Stream, true)
+            {
+                Logger = LoggerFactory.CreateLogger<ChunkReader>(),
+            };
             try
             {
                 var Chunks = Reader.ReadToEnd().ToList();
