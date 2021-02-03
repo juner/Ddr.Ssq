@@ -22,27 +22,39 @@ namespace Ssq.AnalyzeTool
             .ConfigureLogging((context, builder) =>
             {
                 builder.ClearProviders();
-                builder.AddConfiguration(context.Configuration.GetSection("Logging"));
-                builder.AddConsole();
-                builder.AddDebug();
+                var LoggingSection = context.Configuration.GetSection("Logging");
+                if (LoggingSection.GetChildren().Any())
+                {
+                    builder.AddConfiguration(LoggingSection);
+                    if (LoggingSection.GetSection("Console").GetChildren().Any())
+                        builder.AddConsole();
+                    if (LoggingSection.GetSection("Debug").GetChildren().Any())
+                        builder.AddDebug();
+                }
             });
 
         readonly IHostEnvironment Environment;
         readonly ILogger<Program> Logger;
         public Program(IHostEnvironment Environment, ILogger<Program> Logger, IConfiguration Configuration)
         {
+            Console.WriteLine(@"
+##############################################################
+### Check DDR SSQ/CSQ Analyze tool (C) pumpCurry 2019-2020 ###
+##############################################################
+");
             this.Environment = Environment;
             this.Logger = Logger;
-            Console.WriteLine();
-            Console.WriteLine("##############################################################");
-            Console.WriteLine("### Check DDR SSQ/CSQ Analyze tool (C) pumpCurry 2019-2020 ###");
-            Console.WriteLine("##############################################################");
-            Console.WriteLine();
-            if (Environment.IsDevelopment())
             {
-                Console.WriteLine("Configuration:");
+                Logger.LogDebug(nameof(Environment) + ":");
+                using var b = Logger.BeginScope(nameof(Environment));
+                Logger.LogDebug("[ContentRootPath]: {ContentRootPath}", Environment.ContentRootPath);
+                Logger.LogDebug("[Environment]: {EnvironmentName}", Environment.EnvironmentName);
+            }
+            {
+                Logger.LogDebug(nameof(Configuration) + ":");
+                using var b = Logger.BeginScope(nameof(Configuration));
                 foreach (var c in Configuration.AsEnumerable())
-                    Console.WriteLine($"{c.Key} : {c.Value}");
+                    Logger.LogDebug("[{key}]: {value}", c.Key, c.Value);
             }
         }
 
@@ -58,13 +70,21 @@ namespace Ssq.AnalyzeTool
             }
             using var Stream = new FileStream(FileName, FileMode.Open, FileAccess.Read);
             using var Reader = new ChunkReader(Stream, true, Logger);
-            var Chunks = Reader.ReadToEnd().ToList();
-            Console.WriteLine();
-            Console.WriteLine($"###[ {FileName} , Length: {Stream.Length} Byte(s) ]###");
-            Console.Out.WriteChunckSummary(Chunks);
-            foreach (var Chunk in Chunks)
-                Console.Out.WriteChunkBodyInfo(Chunk);
-            return 0;
+            try
+            {
+                var Chunks = Reader.ReadToEnd().ToList();
+                Console.WriteLine();
+                Console.WriteLine($"###[ {FileName} , Length: {Stream.Length} Byte(s) ]###");
+                Console.Out.WriteChunckSummary(Chunks);
+                foreach (var Chunk in Chunks)
+                    Console.Out.WriteChunkBodyInfo(Chunk);
+                return 0;
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e, "error: {e}", e);
+                return -1;
+            }
         }
     }
 }
