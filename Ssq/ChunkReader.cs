@@ -52,10 +52,10 @@ namespace Ssq
             var buffer = ArrayPool<byte>.Shared.Rent(headerSize);
             try
             {
-                var span = buffer.AsSpan();
+                var span = buffer.AsSpan().Slice(0, headerSize);
                 var readed = Stream.Read(span);
-                Logger.LogDebug("Stream.Read() -> readed:{readed}", readed);
-                Debug.Assert(readed != headerSize, "header size invalid.");
+                Logger.LogDebug("Stream.Read() -> readed:{readed} Position:{Position}", readed, Stream.Position);
+                Debug.Assert(readed == headerSize, "header size invalid.");
                 var header = MemoryMarshal.Read<ChunkHeader>(span);
                 Logger.LogTrace("-> {header}", header.GetDebuggerDisplay());
                 return header;
@@ -90,8 +90,10 @@ namespace Ssq
                 case ChunkType.Bigin_Finish_Config:
                 case ChunkType.StepData:
                     {
+                        var UseSize = Entry * sizeof(uint);
                         var _Size = Size;
-                        Size += Entry * sizeof(uint);
+                        Size += UseSize;
+                        Logger.LogTrace("{_Size} + {Entry} * {uint} -> {Size} Length:{Length}", _Size, Entry, sizeof(uint), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
                         var TimeOffsets = new uint[Entry];
@@ -112,6 +114,7 @@ namespace Ssq
                     {
                         var _Size = Size;
                         Size += Entry * sizeof(int);
+                        Logger.LogTrace("{_Size} + {Entry} * {int} -> {Size} Length:{Length}", _Size, Entry, sizeof(int), Size,Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
                         var Tempo_TFPS_Config = new int[Entry];
@@ -127,6 +130,7 @@ namespace Ssq
                     {
                         var _Size = Size;
                         Size += Entry * sizeof(short);
+                        Logger.LogTrace("{_Size} + {Entry} * {short} -> {Size} Length:{Length}", _Size, Entry, sizeof(short), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
                         var Bigin_Finish_Config = new short[Entry];
@@ -141,7 +145,9 @@ namespace Ssq
                 case ChunkType.StepData:
                     {
                         var _Size = Size;
-                        Size += Entry * sizeof(byte);
+                        var UseSize = Entry * sizeof(byte);
+                        Size += UseSize;
+                        Logger.LogTrace("{_Size} + {Entry} * {int} -> {Size} Length:{Length}", _Size, Entry, sizeof(int), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
                         var StepData = new byte[Entry];
@@ -153,22 +159,21 @@ namespace Ssq
                         Logger.LogTrace(nameof(StepData) + " [{StepData}]", new JoinFormatter(", ", StepData.Select(v => $"{v:X2}")));
                     }
                     break;
-                default:
-                    {
-                        var _Size = Size;
-                        Size += Entry * sizeof(byte);
-                        Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
-                        using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
-                        var OtherData = new byte[Entry];
-                        for (var i = 0; i < Entry; i++)
-                        {
-                            OtherData[i] = Reader.ReadByte();
-                        }
-                        Chunk.OtherData = OtherData;
-                        Logger.LogTrace(nameof(OtherData) + " [{OtherData}]", new JoinFormatter(", ", OtherData.Select(v => $"{v:X2}")));
-                    }
-                    break;
             }
+            if (Size < Length)
+            {
+                var _Size = Size;
+                var UseSize = Length - _Size;
+                Size += UseSize;
+                Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
+                using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
+                var OtherData = new byte[UseSize];
+                var result = Stream.Read(OtherData.AsSpan());
+                Debug.Assert(result == UseSize, $"miss match size Result:{result} UseSize:{UseSize}");
+                Chunk.OtherData = OtherData;
+                Logger.LogTrace(nameof(OtherData) + " [{OtherData}]", new JoinFormatter(", ", OtherData.Select(v => $"{v:X2}")));
+            }
+            Debug.Assert(Size == Length, $"has no read byte. Size:{Size} Length:{Length}");
         }
         public void Dispose()
         {

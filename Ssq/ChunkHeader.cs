@@ -35,8 +35,8 @@ namespace Ssq
             };
             if (Type is ChunkType.StepData)
                 members = members
-                    .Append($"{nameof(PlayDifficulty)}:{PlayDifficulty.ToMemberName()}(0x{PlayDifficulty:X4})")
-                    .Append($"{nameof(PlayStyle)}:{PlayStyle.ToMemberName()}(0x{PlayStyle:X4})");
+                    .Append($"{nameof(PlayDifficulty)}:{PlayDifficulty.ToMemberName()}(0x{(short)PlayDifficulty:X4})")
+                    .Append($"{nameof(PlayStyle)}:{PlayStyle.ToMemberName()}(0x{(short)PlayStyle:X4})");
             return $"{nameof(ChunkHeader)}{{{string.Join(", ", members)}}}";
         }
     }
