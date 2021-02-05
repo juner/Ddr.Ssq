@@ -100,10 +100,10 @@ namespace Ssq
                         Logger.LogTrace("{_Size} + {Entry} * {uint} -> {Size} Length:{Length}", _Size, Entry, sizeof(uint), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
-                        var TimeOffsets = new uint[Entry];
+                        var TimeOffsets = new int[Entry];
                         for (var i = 0; i < Entry; i++)
                         {
-                            TimeOffsets[i] = Reader.ReadUInt32();
+                            TimeOffsets[i] = Reader.ReadInt32();
                         }
                         Chunk.TimeOffsets = TimeOffsets;
                         Logger.LogTrace(nameof(TimeOffsets) + " [{TimeOffsets}]", new JoinFormatter(", ", TimeOffsets.Select(v => $"{v:X8}")));
@@ -137,13 +137,13 @@ namespace Ssq
                         Logger.LogTrace("{_Size} + {Entry} * {short} -> {Size} Length:{Length}", _Size, Entry, sizeof(short), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
-                        var Bigin_Finish_Config = new short[Entry];
+                        var Bigin_Finish_Config = new BiginFinishConfigType[Entry];
                         for (var i = 0; i < Entry; i++)
                         {
-                            Bigin_Finish_Config[i] = Reader.ReadInt16();
+                            Bigin_Finish_Config[i] = (BiginFinishConfigType)Reader.ReadInt16();
                         }
                         Chunk.Bigin_Finish_Config = Bigin_Finish_Config;
-                        Logger.LogTrace(nameof(Bigin_Finish_Config) + " [{Bigin_Finish_Config}]", new JoinFormatter(", ", Bigin_Finish_Config.Select(v => $"{v:X4}")));
+                        Logger.LogTrace(nameof(Bigin_Finish_Config) + " [{Bigin_Finish_Config}]", new JoinFormatter(", ", Bigin_Finish_Config.Select(v => $"{(short)v:X4}")));
                     }
                     break;
                 case ChunkType.StepData:
@@ -154,13 +154,13 @@ namespace Ssq
                         Logger.LogTrace("{_Size} + {Entry} * {int} -> {Size} Length:{Length}", _Size, Entry, sizeof(int), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
-                        var StepData = new byte[Entry];
+                        var StepData = new StepType[Entry];
                         for (var i = 0; i < Entry; i++)
                         {
-                            StepData[i] = Reader.ReadByte();
+                            StepData[i] = (StepType)Reader.ReadByte();
                         }
                         Chunk.StepData = StepData;
-                        Logger.LogTrace(nameof(StepData) + " [{StepData}]", new JoinFormatter(", ", StepData.Select(v => $"{v:X2}")));
+                        Logger.LogTrace(nameof(StepData) + " [{StepData}]", new JoinFormatter(", ", StepData.Select(v => $"{(byte)v:X2}")));
                     }
                     break;
             }
