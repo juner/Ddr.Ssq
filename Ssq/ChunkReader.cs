@@ -55,7 +55,11 @@ namespace Ssq
                 var span = buffer.AsSpan().Slice(0, headerSize);
                 var readed = Stream.Read(span);
                 Logger.LogDebug("Stream.Read() -> readed:{readed} Position:{Position}", readed, Stream.Position);
-                Debug.Assert(readed == headerSize, $"header readed size invalid. required :{headerSize} readed:{readed}");
+                if (readed < headerSize)
+                {
+                    foreach(ref byte s in span[readed..])
+                        s = 0;
+                }
                 var header = MemoryMarshal.Read<ChunkHeader>(span);
                 Logger.LogTrace("-> {header}", header.GetDebuggerDisplay());
                 return header;
