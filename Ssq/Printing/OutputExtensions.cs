@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace Ssq.Printing
 {
@@ -17,29 +18,38 @@ namespace Ssq.Printing
         {
             const string BORDER = "+----+------+--------------+-------------------------+-----------------------------------+------------------+";
             const string HEADER = "|#   |Addr: |Length:( HEX )|Chunk type:              |Values                             |Entry             |";
-            Writer.WriteLine($"{BORDER}{Environment.NewLine}{HEADER}{Environment.NewLine}{BORDER}");
-            foreach (var (Chunk, Index) in Chunks.Select((v, i) => (v, i)))
+            var Builder = new StringBuilder();
+            try
             {
-                Writer.Write($"[{Index + 1:d3}]");
-                Writer.Write($"[{Chunk.Offset:X2}][{Chunk.Header.Length:d6} (0x{Chunk.Header.Length:X5})]");
-                Writer.Write($"[{Chunk.Header.Type:X2}:{Chunk.Header.Type.ToMemberName().PadLeft(20)}]");
-                Writer.Write(Chunk.Header.Type switch
+                Builder.AppendLine($"{BORDER}{Environment.NewLine}{HEADER}{Environment.NewLine}{BORDER}");
+                foreach (var (Chunk, Index) in Chunks.Select((v, i) => (v, i)))
                 {
-                    ChunkType.Tempo_TFPS_Config
-                        => $"[TfPS  : ({Chunk.Header.Param:X4}) {Chunk.Header.Param:D4}] {string.Empty.PadLeft(14)}",
-                    ChunkType.Bigin_Finish_Config
-                        => $"[param : ({Chunk.Header.Param:X4}) {Chunk.Header.Param:D4}] {string.Empty.PadLeft(14)}",
-                    ChunkType.StepData
-                        => $"[level : ({Chunk.Header.Param:X04}) {Chunk.Header.Param:D04} {Chunk.Header.PlayStyle.ToMemberName().PadLeft(8)} {Chunk.Header.PlayDifficulty.ToMemberName().PadLeft(10)}]",
-                    _
-                        => $"[param : ({Chunk.Header.Param:X4}) {Chunk.Header.Param:D4}] {string.Empty.PadLeft(14)}",
-                });
-                Writer.Write($"[Entry: {Chunk.Header.Entry:D4} ({Chunk.Header.Entry:X4})]");
-                Writer.WriteLine();
-                if (Chunk.Header.Type is ChunkType.EndOfFile)
-                    break;
+                    Builder.Append($"[{Index + 1:d3}]");
+                    Builder.Append($"[{Chunk.Offset:X4}][{Chunk.Header.Length:d6} (0x{Chunk.Header.Length:X5})]");
+                    Builder.Append($"[{(short)Chunk.Header.Type:X2}:{Chunk.Header.Type.ToMemberName(),20}]");
+                    Builder.Append(Chunk.Header.Type switch
+                    {
+                        ChunkType.Tempo_TFPS_Config
+                            => $"[TfPS  : ({Chunk.Header.Param:X4}) {Chunk.Header.Param:D4}] {string.Empty,14}",
+                        ChunkType.Bigin_Finish_Config
+                            => $"[param : ({Chunk.Header.Param:X4}) {Chunk.Header.Param:D4}] {string.Empty,14}",
+                        ChunkType.StepData
+                            => $"[level : ({Chunk.Header.Param:X04}) {Chunk.Header.Param:D04} {Chunk.Header.PlayStyle.ToMemberName(),8} {Chunk.Header.PlayDifficulty.ToMemberName(),10}]",
+                        _
+                            => $"[param : ({Chunk.Header.Param:X4}) {Chunk.Header.Param:D4}] {string.Empty,14}",
+                    });
+                    Builder.Append($"[Entry: {Chunk.Header.Entry:D4} ({Chunk.Header.Entry:X4})]");
+                    Builder.AppendLine();
+                    if (Chunk.Header.Type is ChunkType.EndOfFile)
+                        break;
+                }
+                Builder.Append(BORDER);
             }
-            Writer.WriteLine(BORDER);
+            finally
+            {
+                Writer.WriteLine(Builder.ToString());
+                Writer.Flush();
+            }
         }
         /// <summary>
         /// Write Text Chunk Body Info,
