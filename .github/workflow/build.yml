@@ -1,0 +1,45 @@
+name: .NET Core
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.102
+ 
+    - name: Install dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build -c Release --no-restore
+      
+    - name: Test
+      run: dotnet test --no-restore --verbosity normal
+      
+    - name: Publish (x64)
+      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_64 -p:PublishSingleFile=true -r win10-x64 -p:PublishTrimmed=true --self-contained true
+      
+    - name: Publish (x86)
+      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86 -p:PublishSingleFile=true -r win10-x32 -p:PublishTrimmed=true --self-contained true
+      
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Publish (x64)
+        path: ./publish_64/
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Publish (x86)
+        path: ./publish_86/

@@ -59,8 +59,13 @@ namespace Ssq.AnalyzeTool
                     Logger.LogDebug("[{key}]: {value}", c.Key, c.Value);
             }
         }
-
-        public int Run([Option(0, "view chunk file.")] string FileName)
+        /// <summary>
+        /// ファイル読み込みして情報を表示する機能
+        /// </summary>
+        /// <param name="FileName"></param>
+        /// <returns></returns>
+        [Command("read", "reading SSQ/CSQ information.")]
+        public int ReadInfo([Option(0, "view chunk file.")] string FileName)
         {
             if (!string.IsNullOrEmpty(Environment.ContentRootPath))
                 Directory.SetCurrentDirectory(Environment.ContentRootPath);
@@ -71,7 +76,6 @@ namespace Ssq.AnalyzeTool
                 return 9;
             }
             using var Stream = new FileStream(FileName, FileMode.Open, FileAccess.Read);
-            using var _Stream = new BufferedStream(Stream);
             using var Reader = new ChunkReader(Stream, true)
             {
                 Logger = LoggerFactory.CreateLogger<ChunkReader>(),
@@ -88,6 +92,7 @@ namespace Ssq.AnalyzeTool
             }
             catch (Exception e)
             {
+                Console.Error.WriteLine("read error : {0}", e);
                 Logger.LogError(e, "error: {e}", e);
                 return -1;
             }
