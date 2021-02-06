@@ -154,10 +154,10 @@ namespace Ssq
                         Logger.LogTrace("{_Size} + {Entry} * {int} -> {Size} Length:{Length}", _Size, Entry, sizeof(int), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
-                        var StepData = new StepType[Entry];
+                        var StepData = new byte[Entry];
                         for (var i = 0; i < Entry; i++)
                         {
-                            StepData[i] = (StepType)Reader.ReadByte();
+                            StepData[i] = Reader.ReadByte();
                         }
                         Chunk.StepData = StepData;
                         Logger.LogTrace(nameof(StepData) + " [{StepData}]", new JoinFormatter(", ", StepData.Select(v => $"{(byte)v:X2}")));

@@ -9,7 +9,7 @@ namespace Ssq
         public int[] TimeOffsets { get; set; } = Array.Empty<int>();
         public int[] Tempo_TFPS_Config { get; set; } = Array.Empty<int>();
         public BiginFinishConfigType[] Bigin_Finish_Config { get; set; } = Array.Empty<BiginFinishConfigType>();
-        public StepType[] StepData { get; set; } = Array.Empty<StepType>();
+        public byte[] StepData { get; set; } = Array.Empty<byte>();
         public byte[] OtherData { get; set; } = Array.Empty<byte>();
     }
 }

@@ -136,8 +136,8 @@ namespace Ssq.Printing
                                         => new[] { "　", "　", "　", "　", "　", "　", "　", "　", "　", "　", "　", "　", ":  " },
                                 };
                                 var _step = Chunk.StepData[i];
-                                Step[12] = $"{(byte)_step:X02}";
-                                if (_step is default(StepType))
+                                Step[12] = $"{_step:X02}";
+                                if (_step is 0)
                                 {
                                     var l = Shift(lastStep);
                                     Step[l] = "＃";
@@ -156,28 +156,28 @@ namespace Ssq.Printing
                                         or PlayStyle.Double 
                                         or PlayStyle.Battle) //solo以外
                                     {
-                                        if (((byte)_step & 0x01) > 0) { Step[1] = "←"; lastStep.Add(1); lastCount++; }
-                                        if (((byte)_step & 0x02) > 0) { Step[2] = "↓"; lastStep.Add(2); lastCount++; }
-                                        if (((byte)_step & 0x04) > 0) { Step[3] = "↑"; lastStep.Add(3); lastCount++; }
-                                        if (((byte)_step & 0x08) > 0) { Step[4] = "→"; lastStep.Add(4); lastCount++; }
-                                        if (((byte)_step & 0xf) == 0xf) // Shock Arrow
+                                        if ((_step & 0x01) > 0) { Step[1] = "←"; lastStep.Add(1); lastCount++; }
+                                        if ((_step & 0x02) > 0) { Step[2] = "↓"; lastStep.Add(2); lastCount++; }
+                                        if ((_step & 0x04) > 0) { Step[3] = "↑"; lastStep.Add(3); lastCount++; }
+                                        if ((_step & 0x08) > 0) { Step[4] = "→"; lastStep.Add(4); lastCount++; }
+                                        if ((_step & 0xf) == 0xf) // Shock Arrow
                                         { Step[1] = "◆"; Step[2] = "◆"; Step[3] = "◆"; Step[4] = "◆"; Step[5] = "衝"; } 
 
                                         if (i < Chunk.Header.Entry - 1)
                                         {
-                                            if (((byte)_step & 0xf) > 0 && (byte)Chunk.StepData[i+1] == 0x0) // freeze arrow 
+                                            if ((_step & 0xf) > 0 && Chunk.StepData[i + 1] == 0x0) // freeze arrow 
                                             { Step[5] = "長"; } 
                                         }
                                     }
                                     if (Chunk.Header.PlayStyle 
                                         is PlayStyle.Solo)
                                     {
-                                        if (((byte)_step & 0x01) > 0) { Step[0] = "←"; }
-                                        if (((byte)_step & 0x10) > 0) { Step[1] = "↖"; }
-                                        if (((byte)_step & 0x02) > 0) { Step[2] = "↓"; }
-                                        if (((byte)_step & 0x04) > 0) { Step[3] = "↑"; }
-                                        if (((byte)_step & 0x40) > 0) { Step[4] = "↗"; }
-                                        if (((byte)_step & 0x08) > 0) { Step[5] = "→"; }
+                                        if ((_step & 0x01) > 0) { Step[0] = "←"; }
+                                        if ((_step & 0x10) > 0) { Step[1] = "↖"; }
+                                        if ((_step & 0x02) > 0) { Step[2] = "↓"; }
+                                        if ((_step & 0x04) > 0) { Step[3] = "↑"; }
+                                        if ((_step & 0x40) > 0) { Step[4] = "↗"; }
+                                        if ((_step & 0x08) > 0) { Step[5] = "→"; }
                                     }
 
                                     if (Chunk.Header.PlayStyle 
