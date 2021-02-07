@@ -89,7 +89,7 @@ namespace Ssq.Printing
             }
         }
         /// <summary>
-        /// Write
+        /// output <see cref="ChunkType.Tempo_TFPS_Config"/> body information.
         /// </summary>
         /// <param name="Chunk"></param>
         /// <returns></returns>
@@ -119,6 +119,11 @@ namespace Ssq.Printing
                 yield return $"[01:BPM][({offset_hex0,6}:{offset_hex1,6}) {LastTimeOffset,8}:{TimeOffset,8}][BPM:{bpm:F5}] Delta> Offset:({offset_hexD,6}){DeltaOffset,7} / ({DeltaTicks,5:X}){DeltaTicks,7} ";
             }
         }
+        /// <summary>
+        /// output <see cref="ChunkType.Bigin_Finish_Config"/> body information.
+        /// </summary>
+        /// <param name="Chunk"></param>
+        /// <returns></returns>
         public static IEnumerable<string> Bigin_Finish_ConfigToFormatEnumerable(Chunk Chunk)
         {
             const ChunkType BASE_TYPE = ChunkType.Bigin_Finish_Config;
@@ -137,6 +142,11 @@ namespace Ssq.Printing
                 yield return $"[02:BFC][({offset_hex1,6}) {TimeOffset,8}][func.{(short)ConfigType,4:X}: {Chunk.Bigin_Finish_Config[i].ToMemberName(),-18} ] Delta> Offset:({offset_hexD,6}){DeltaOffset,7} ";
             }
         }
+        /// <summary>
+        /// output <see cref="ChunkType.StepData"/> body information.
+        /// </summary>
+        /// <param name="Chunk"></param>
+        /// <returns></returns>
         public static IEnumerable<string> StepDataToFormatEnumerable(Chunk Chunk)
         {
             const ChunkType BASE_TYPE = ChunkType.StepData;
