@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <PackAsTool>true</PackAsTool>
+    <AssemblyName>ssqcheck</AssemblyName>
     <ToolCommandName>ssqcheck</ToolCommandName>
     <UserSecretsId>5fa307e2-419b-4725-9ceb-578b6e72c6d1</UserSecretsId>
   </PropertyGroup>
@@ -15,8 +16,13 @@
     <ProjectReference Include="..\Ssq\Ssq.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Update="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>
   </ItemGroup>
 </Project>
