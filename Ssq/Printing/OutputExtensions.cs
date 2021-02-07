@@ -24,21 +24,21 @@ namespace Ssq.Printing
                 Builder.AppendLine($"{BORDER}{Environment.NewLine}{HEADER}{Environment.NewLine}{BORDER}");
                 foreach (var (Chunk, Index) in Chunks.Select((v, i) => (v, i)))
                 {
-                    Builder.Append($"[{Index + 1:d3}]");
-                    Builder.Append($"[{Chunk.Offset:X4}][{Chunk.Header.Length:d6} (0x{Chunk.Header.Length:X5})]");
-                    Builder.Append($"[{(short)Chunk.Header.Type:X2}:{Chunk.Header.Type.ToMemberName(),20}]");
+                    Builder.Append($"[{Index + 1,3}]");
+                    Builder.Append($"[{Chunk.Offset,5:X}][{Chunk.Header.Length,6} ({Chunk.Header.Length,5:X})]");
+                    Builder.Append($"[{(short)Chunk.Header.Type:X2}:{Chunk.Header.Type.ToMemberName(),-20}]");
                     Builder.Append(Chunk.Header.Type switch
                     {
                         ChunkType.Tempo_TFPS_Config
-                            => $"[TfPS  : ({Chunk.Header.Param:X4}) {Chunk.Header.Param:D4}] {string.Empty,14}",
+                            => $"[TfPS  : ({Chunk.Header.Param,4:X}) {Chunk.Header.Param,4}] {string.Empty,14}",
                         ChunkType.Bigin_Finish_Config
-                            => $"[param : ({Chunk.Header.Param:X4}) {Chunk.Header.Param:D4}] {string.Empty,14}",
+                            => $"[param : ({Chunk.Header.Param,4:X}) {Chunk.Header.Param,4}] {string.Empty,14}",
                         ChunkType.StepData
-                            => $"[level : ({Chunk.Header.Param:X04}) {Chunk.Header.Param:D04} {Chunk.Header.PlayStyle.ToMemberName(),-8} {Chunk.Header.PlayDifficulty.ToMemberName(),-10}]",
+                            => $"[level : ({Chunk.Header.Param,4:X4}) {Chunk.Header.PlayStyle.ToMemberName(),-8} {Chunk.Header.PlayDifficulty.ToMemberName(),-10}]",
                         _
-                            => $"[param : ({Chunk.Header.Param:X4}) {Chunk.Header.Param:D4}] {string.Empty,14}",
+                            => $"[param : ({Chunk.Header.Param,4:X}) {Chunk.Header.Param,4}] {string.Empty,14}",
                     });
-                    Builder.Append($"[Entry: {Chunk.Header.Entry:D4} ({Chunk.Header.Entry:X4})]");
+                    Builder.Append($"[Entry: {Chunk.Header.Entry,4} ({Chunk.Header.Entry,4:X})]");
                     Builder.AppendLine();
                     if (Chunk.Header.Type is ChunkType.EndOfFile)
                         break;
@@ -65,9 +65,9 @@ namespace Ssq.Printing
                 Builder.AppendLine(Chunk.Header.Type switch
                 {
                     ChunkType.StepData
-                        => $"[[[{(short)Chunk.Header.Type:X2}:{Chunk.Header.Type.ToMemberName():-20}]]] [level : ({Chunk.Header.Param:X4}) {Chunk.Header.PlayStyle.ToMemberName(),-8} {Chunk.Header.PlayDifficulty.ToMemberName(),-10}]",
+                        => $"[[[{(short)Chunk.Header.Type,2:X2}:{Chunk.Header.Type.ToMemberName(),-20}]]] [level : ({Chunk.Header.Param,4:X4}) {Chunk.Header.PlayStyle.ToMemberName(),-8} {Chunk.Header.PlayDifficulty.ToMemberName(),-10}]",
                     _
-                        => $"[[[{(short)Chunk.Header.Type:X2}:{Chunk.Header.Type.ToMemberName():-20}]]]",
+                        => $"[[[{(short)Chunk.Header.Type,2:X2}:{Chunk.Header.Type.ToMemberName(),-20}]]]",
                 });
                 switch (Chunk.Header.Type)
                 {
@@ -83,16 +83,16 @@ namespace Ssq.Printing
                                 var DeltaOffset = TimeOffset - LastTimeOffset;
                                 var DeltaTicks = Chunk.Tempo_TFPS_Config[i] - Chunk.Tempo_TFPS_Config[i - 1];
 
-                                var offset_hexD = $"{DeltaOffset:X6}"[^6..6];
-                                var offset_hex0 = $"{LastTimeOffset:X6}"[^6..6]; //負の表示対応 (DDR A)
-                                var offset_hex1 = $"{TimeOffset:X6}"[^6..6]; //負の表示対応 (DDR A)
+                                var offset_hexD = $"{DeltaOffset,6:X}"[^6..6];
+                                var offset_hex0 = $"{LastTimeOffset,6:X}"[^6..6]; //負の表示対応 (DDR A)
+                                var offset_hex1 = $"{TimeOffset,6:X}"[^6..6]; //負の表示対応 (DDR A)
 
                                 var TfPS = Chunk.Header.Param;
                                 var MeasureLength = 4096;
                                 
                                 var bpm = (DeltaOffset / (double)MeasureLength) / ((DeltaTicks / (double)TfPS) / 240);
 
-                                Builder.AppendLine($"[01:BPM][({offset_hex0:6}:{offset_hex1:6}) {LastTimeOffset:8D}:{TimeOffset:8D}][BPM:{bpm:F5}] Delta> Offset:({offset_hexD:6}){DeltaOffset:D7} / ({DeltaTicks:X5}){DeltaTicks:D7}");
+                                Builder.AppendLine($"[01:BPM][({offset_hex0,6}:{offset_hex1,6}) {LastTimeOffset,8}:{TimeOffset,8}][BPM:{bpm:F5}] Delta> Offset:({offset_hexD,6}){DeltaOffset,7} / ({DeltaTicks,5:X}){DeltaTicks,7} ");
                             }
                         }
                         break;
@@ -102,13 +102,13 @@ namespace Ssq.Printing
                             for (var i = 0; i < Chunk.Header.Entry; i++)
                             {
                                 var TimeOffset = Chunk.TimeOffsets[i];
-                                var offset_hex1 = $"{TimeOffset:X6}"[^6..6];
+                                var offset_hex1 = $"{TimeOffset,6:X}"[^6..6];
                                 var LastTimeOffset = i is 0 ? 0 : Chunk.TimeOffsets[i - 1];
-                                var offset_hexD = i is 0 ? "0" : $"{TimeOffset - Chunk.TimeOffsets[i - 1]:X6}"[^6..6];
+                                var offset_hexD = i is 0 ? "0" : $"{TimeOffset - Chunk.TimeOffsets[i - 1],6:X}"[^6..6];
 
                                 var DeltaOffset = TimeOffset - LastTimeOffset;
                                 var ConfigType = Chunk.Bigin_Finish_Config[i];
-                                Builder.AppendLine($"[02:BFC][({offset_hex1:6}) {TimeOffset:D8}][func.{(short)ConfigType:X4}: {Chunk.Bigin_Finish_Config[i].ToMemberName():-18} ] Delta> Offset:({offset_hexD:6}){DeltaOffset:D7} ");
+                                Builder.AppendLine($"[02:BFC][({offset_hex1,6}) {TimeOffset,8}][func.{(short)ConfigType,4:X}: {Chunk.Bigin_Finish_Config[i].ToMemberName(),-18} ] Delta> Offset:({offset_hexD,6}){DeltaOffset,7} ");
                             }
                         }
                         break;
@@ -136,7 +136,7 @@ namespace Ssq.Printing
                                         => new[] { "　", "　", "　", "　", "　", "　", "　", "　", "　", "　", "　", "　", ":  " },
                                 };
                                 var _step = Chunk.StepData[i];
-                                Step[12] = $"{_step:X02}";
+                                Step[12] = $":{_step:X2}";
                                 if (_step is 0)
                                 {
                                     var l = Shift(lastStep);
@@ -184,24 +184,22 @@ namespace Ssq.Printing
                                         is PlayStyle.Double 
                                         or PlayStyle.Battle)
                                     {
-                                        if (((byte)_step & 0x10) > 0) { Step[7] = "←"; }
-                                        if (((byte)_step & 0x20) > 0) { Step[8] = "↓"; }
-                                        if (((byte)_step & 0x40) > 0) { Step[9] = "↑"; }
-                                        if (((byte)_step & 0x80) > 0) { Step[10] = "→"; }
-                                        if (((byte)_step & 0xF0) == 0xF0) //Shock Arrow
+                                        if ((_step & 0x10) > 0) { Step[7] = "←"; }
+                                        if ((_step & 0x20) > 0) { Step[8] = "↓"; }
+                                        if ((_step & 0x40) > 0) { Step[9] = "↑"; }
+                                        if ((_step & 0x80) > 0) { Step[10] = "→"; }
+                                        if ((_step & 0xF0) == 0xF0) //Shock Arrow
                                         { Step[7] = "◆"; Step[8] = "◆"; Step[9] = "◆"; Step[10] = "◆"; Step[6] = "衝"; }
                                         
                                         if (i < Chunk.Header.Entry -1)
                                         {
-                                            if (((byte)_step & 0xf0) > 0 && (byte)Chunk.StepData[i + 1] == 0x0) // freeze arrow 
+                                            if ((_step & 0xf0) > 0 && (byte)Chunk.StepData[i + 1] == 0x0) // freeze arrow 
                                             { Step[6] = "長"; }
                                         }
                                     }
                                 }
                                 Builder
-                                    .Append($"[03:STP][({TimeOffset:X6}) {TimeOffset:D8}][")
-                                    .Append(string.Join("", Step))
-                                    .AppendLine($"] Delta> Offset:({DeltaOffset:X6}){DeltaOffset:D7}");
+                                    .AppendLine($"[03:STP][({TimeOffset,6:X}) {TimeOffset,8}][{string.Join("", Step)}] Delta> Offset:({DeltaOffset,6:X}){DeltaOffset,7} ");
                             }
                         }
                         break;
