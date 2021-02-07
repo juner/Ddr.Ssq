@@ -1,4 +1,5 @@
 ﻿using System.Runtime.Serialization;
+using Ssq.Internal;
 
 namespace Ssq
 {

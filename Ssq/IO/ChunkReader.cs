@@ -6,9 +6,11 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-
+using Ssq.Internal;
 namespace Ssq.IO
 {
     public class ChunkReader : IDisposable
@@ -42,32 +44,71 @@ namespace Ssq.IO
         {
             var Chunk = new Chunk();
             ReadHeader(Chunk);
-            ReadBody(Chunk);
+            ReadBody(Chunk, Chunk.Header);
             return Chunk;
+        }
+        static int headerSize;
+        static int HeaderSize
+        {
+            get
+            {
+                if (headerSize is 0)
+                    Interlocked.CompareExchange(ref headerSize, Marshal.SizeOf<ChunkHeader>(), 0);
+                return headerSize;
+            }
         }
         public ChunkHeader ReadHeader()
         {
-            var headerSize = Marshal.SizeOf<ChunkHeader>();
-            Logger.LogTrace("headerSize:{size}", headerSize);
-            var buffer = ArrayPool<byte>.Shared.Rent(headerSize);
+            Logger.LogDebug("read header");
+            var buffer = ArrayPool<byte>.Shared.Rent(HeaderSize);
             try
             {
-                var span = buffer.AsSpan().Slice(0, headerSize);
+                var span = buffer.AsSpan().Slice(0, HeaderSize);
                 var readed = Stream.Read(span);
-                Logger.LogDebug("Stream.Read() -> readed:{readed} Position:{Position}", readed, Stream.Position);
-                if (readed < headerSize)
-                {
-                    foreach(ref byte s in span[readed..])
-                        s = 0;
-                }
+                if(Logger.IsEnabled(LogLevel.Trace))
+                    Logger.LogTrace("[{header}]", new JoinFormatter(" ", buffer[..readed].ToArray().Select(v => $"{v,2:X2}")));
+                if (Stream.CanSeek)
+                    Logger.LogDebug(" -> readed:{readed} Position:{Position}", readed, Stream.Position);
+                else
+                    Logger.LogDebug(" -> readed:{readed}", readed);
+                if (readed < HeaderSize)
+                    SetZero(span[readed..]);
                 var header = MemoryMarshal.Read<ChunkHeader>(span);
-                Logger.LogTrace("-> {header}", header.GetDebuggerDisplay());
+                Logger.LogDebug("-> {header}", header.GetDebuggerDisplay());
                 return header;
             }
             finally
             {
                 ArrayPool<byte>.Shared.Return(buffer);
             }
+        }
+        public async ValueTask<ChunkHeader> ReadHeaderAsync(CancellationToken Token)
+        {
+            Logger.LogDebug("read header");
+            var buffer = ArrayPool<byte>.Shared.Rent(HeaderSize);
+            try
+            {
+                var memory = buffer.AsMemory();
+                var readed = await Stream.ReadAsync(memory, Token);
+                if (Stream.CanSeek)
+                    Logger.LogDebug(" -> readed:{readed} Position:{Position}", readed, Stream.Position);
+                else
+                    Logger.LogDebug(" -> readed:{readed}", readed);
+                if (readed < HeaderSize)
+                    SetZero(memory[readed..].Span);
+                var header = MemoryMarshal.Read<ChunkHeader>(memory.Span);
+                Logger.LogDebug("-> {header}", header.GetDebuggerDisplay());
+                return header;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        }
+        static void SetZero(Span<byte> span)
+        {
+            foreach (ref byte s in span)
+                s = 0;
         }
         public void ReadHeader(Chunk Chunk)
         {
@@ -76,16 +117,16 @@ namespace Ssq.IO
             Chunk.Offset = Offset;
             Chunk.Header = Header;
         }
-        public void ReadBody(Chunk Chunk)
+        public void ReadBody(Chunk Chunk, in ChunkHeader Header)
         {
-            if (Chunk.Header is { Type: ChunkType.EndOfFile } or { Length: 0 } or { Entry: 0 })
+            if (Header is { Type: ChunkType.EndOfFile } or { Length: 0 } or { Entry: 0 })
                 return;
-            var Entry = Chunk.Header.Entry;
-            var Length = Chunk.Header.Length;
+            var Entry = Header.Entry;
+            var Length = Header.Length;
             var Size = Marshal.SizeOf<ChunkHeader>();
-            Logger.LogTrace("usable body size Length:{Length} - HeaderSize:{HeaderSize} -> {Size}", Length, Size, Length - Size);
+            Logger.LogDebug("usable body size Length:{Length} - HeaderSize:{HeaderSize} -> {Size}", Length, Size, Length - Size);
             //timeOffsetのリストを生成
-            switch (Chunk.Header.Type)
+            switch (Header.Type)
             {
                 //case ChunkType.EndOfFile:
                 //    return;
@@ -97,7 +138,7 @@ namespace Ssq.IO
                         var UseSize = Entry * sizeof(uint);
                         var _Size = Size;
                         Size += UseSize;
-                        Logger.LogTrace("{_Size} + {Entry} * {uint} -> {Size} Length:{Length}", _Size, Entry, sizeof(uint), Size, Length);
+                        Logger.LogDebug("{_Size} + {Entry} * {uint} -> {Size} Length:{Length}", _Size, Entry, sizeof(uint), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
                         var TimeOffsets = new int[Entry];
@@ -106,11 +147,12 @@ namespace Ssq.IO
                             TimeOffsets[i] = Reader.ReadInt32();
                         }
                         Chunk.TimeOffsets = TimeOffsets;
-                        Logger.LogTrace(nameof(TimeOffsets) + " [{TimeOffsets}]", new JoinFormatter(", ", TimeOffsets.Select(v => $"{v:X8}")));
+                        if (Logger.IsEnabled(LogLevel.Debug))
+                            Logger.LogDebug(nameof(TimeOffsets) + " [{TimeOffsets}]", new JoinFormatter(" ", TimeOffsets.Select(v => $"{v:X8}")));
                     }
                     break;
             }
-            switch (Chunk.Header.Type)
+            switch (Header.Type)
             {
                 //case ChunkType.EndOfFile:
                 //    return;
@@ -118,7 +160,7 @@ namespace Ssq.IO
                     {
                         var _Size = Size;
                         Size += Entry * sizeof(int);
-                        Logger.LogTrace("{_Size} + {Entry} * {int} -> {Size} Length:{Length}", _Size, Entry, sizeof(int), Size,Length);
+                        Logger.LogDebug("{_Size} + {Entry} * {int} -> {Size} Length:{Length}", _Size, Entry, sizeof(int), Size,Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
                         var Tempo_TFPS_Config = new int[Entry];
@@ -127,14 +169,15 @@ namespace Ssq.IO
                             Tempo_TFPS_Config[i] = Reader.ReadInt32();
                         }
                         Chunk.Tempo_TFPS_Config = Tempo_TFPS_Config;
-                        Logger.LogTrace(nameof(Tempo_TFPS_Config) + " [{Tempo_TFPS_Config}]", new JoinFormatter(", ", Tempo_TFPS_Config.Select(v => $"{v:X8}")));
+                        if (Logger.IsEnabled(LogLevel.Debug))
+                            Logger.LogDebug(nameof(Tempo_TFPS_Config) + " [{Tempo_TFPS_Config}]", new JoinFormatter(" ", Tempo_TFPS_Config.Select(v => $"{v:X8}")));
                     }
                     break;
                 case ChunkType.Bigin_Finish_Config:
                     {
                         var _Size = Size;
                         Size += Entry * sizeof(short);
-                        Logger.LogTrace("{_Size} + {Entry} * {short} -> {Size} Length:{Length}", _Size, Entry, sizeof(short), Size, Length);
+                        Logger.LogDebug("{_Size} + {Entry} * {short} -> {Size} Length:{Length}", _Size, Entry, sizeof(short), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
                         var Bigin_Finish_Config = new BiginFinishConfigType[Entry];
@@ -143,7 +186,8 @@ namespace Ssq.IO
                             Bigin_Finish_Config[i] = (BiginFinishConfigType)Reader.ReadInt16();
                         }
                         Chunk.Bigin_Finish_Config = Bigin_Finish_Config;
-                        Logger.LogTrace(nameof(Bigin_Finish_Config) + " [{Bigin_Finish_Config}]", new JoinFormatter(", ", Bigin_Finish_Config.Select(v => $"{(short)v:X4}")));
+                        if (Logger.IsEnabled(LogLevel.Debug))
+                            Logger.LogDebug(nameof(Bigin_Finish_Config) + " [{Bigin_Finish_Config}]", new JoinFormatter(" ", Bigin_Finish_Config.Select(v => $"{(short)v:X4}")));
                     }
                     break;
                 case ChunkType.StepData:
@@ -151,7 +195,7 @@ namespace Ssq.IO
                         var _Size = Size;
                         var UseSize = Entry * sizeof(byte);
                         Size += UseSize;
-                        Logger.LogTrace("{_Size} + {Entry} * {int} -> {Size} Length:{Length}", _Size, Entry, sizeof(int), Size, Length);
+                        Logger.LogDebug("{_Size} + {Entry} * {int} -> {Size} Length:{Length}", _Size, Entry, sizeof(int), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
                         using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
                         var StepData = new byte[Entry];
@@ -160,7 +204,8 @@ namespace Ssq.IO
                             StepData[i] = Reader.ReadByte();
                         }
                         Chunk.StepData = StepData;
-                        Logger.LogTrace(nameof(StepData) + " [{StepData}]", new JoinFormatter(", ", StepData.Select(v => $"{(byte)v:X2}")));
+                        if (Logger.IsEnabled(LogLevel.Debug))
+                            Logger.LogDebug(nameof(StepData) + " [{StepData}]", new JoinFormatter(" ", StepData.Select(v => $"{v,2:X2}")));
                     }
                     break;
             }
@@ -175,7 +220,8 @@ namespace Ssq.IO
                 var result = Stream.Read(OtherData.AsSpan());
                 Debug.Assert(result == UseSize, $"miss match size Result:{result} UseSize:{UseSize}");
                 Chunk.OtherData = OtherData;
-                Logger.LogTrace(nameof(OtherData) + " [{OtherData}]", new JoinFormatter(", ", OtherData.Select(v => $"{v:X2}")));
+                if (Logger.IsEnabled(LogLevel.Debug))
+                    Logger.LogDebug(nameof(OtherData) + " [{OtherData}]", new JoinFormatter(" ", OtherData.Select(v => $"{v:X2}")));
             }
             Debug.Assert(Size == Length, $"has no read byte. Size:{Size} Length:{Length}");
         }
