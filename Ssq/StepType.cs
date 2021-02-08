@@ -141,6 +141,7 @@ namespace Ssq
         Player1 = 0b_0000_1111,
         Player2 = 0b_1111_0000,
     }
+    [AttributeUsage(AttributeTargets.Field)]
     public class StepTypeAttribute : Attribute
     {
         public readonly StepPlayers StepPlayer;
