@@ -6,10 +6,10 @@ using ConsoleAppFramework;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Ssq.Printing;
-using Ssq.IO;
+using Ddr.Ssq.Printing;
+using Ddr.Ssq.IO;
 
-namespace Ssq.AnalyzeTool
+namespace Ddr.Ssq.AnalyzeTool
 {
     class Program : ConsoleAppBase
     {

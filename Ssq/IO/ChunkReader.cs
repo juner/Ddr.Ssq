@@ -10,8 +10,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Ssq.Internal;
-namespace Ssq.IO
+using Ddr.Ssq.Internal;
+namespace Ddr.Ssq.IO
 {
     public class ChunkReader : IDisposable
     {

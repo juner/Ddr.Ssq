@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 
-namespace Ssq.Internal
+namespace Ddr.Ssq.Internal
 {
     internal static class EnumAttributeExtensions
     {

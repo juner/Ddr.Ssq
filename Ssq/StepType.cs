@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Ssq
+namespace Ddr.Ssq
 {
     /// <summary>
     /// Normal Step Types 
