@@ -28,12 +28,28 @@ jobs:
     - name: Test
       run: dotnet test --no-restore --verbosity normal
       
+    - name: Publish (x64) has runtime
+      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_64_r -p:PublishSingleFile=true -r win10-x64 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
+      
+    - name: Publish (x86) has runtime
+      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86_r -p:PublishSingleFile=true -r win10-x86 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
+      
     - name: Publish (x64)
-      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_64 -p:PublishSingleFile=true -r win10-x64 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
+      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_64 -p:PublishSingleFile=true -r win10-x64 -p:PublishTrimmed=true --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
       
     - name: Publish (x86)
-      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86 -p:PublishSingleFile=true -r win10-x86 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
+      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86 -p:PublishSingleFile=true -r win10-x86 -p:PublishTrimmed=true --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
       
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Publish (x64) has runtime
+        path: ./publish_64_r/
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Publish (x86) has runtime
+        path: ./publish_86_r/
+
     - uses: actions/upload-artifact@v2
       with:
         name: Publish (x64)
