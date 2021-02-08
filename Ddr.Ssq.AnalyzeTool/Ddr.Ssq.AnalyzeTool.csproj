@@ -15,7 +15,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Ssq\Ssq.csproj" />
+    <ProjectReference Include="..\Ddr.Ssq\Ddr.Ssq.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.Development.json">

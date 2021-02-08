@@ -29,22 +29,22 @@ jobs:
       run: dotnet test --no-restore --verbosity normal
       
     - name: Publish (x64) has runtime
-      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_64_r -p:PublishSingleFile=true -r win10-x64 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
+      run: dotnet publish ./Ddr.Ssq.AnalyzeTool/ -c Release -o ./publish_64_r -p:PublishSingleFile=true -r win10-x64 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
       
     - name: Publish (x86) has runtime
-      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86_r -p:PublishSingleFile=true -r win10-x86 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
+      run: dotnet publish ./Ddr.Ssq.AnalyzeTool/ -c Release -o ./publish_86_r -p:PublishSingleFile=true -r win10-x86 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
       
     - name: Publish (x64)
-      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_64 -p:PublishSingleFile=true -r win10-x64 --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
+      run: dotnet publish ./Ddr.Ssq.AnalyzeTool/ -c Release -o ./publish_64 -p:PublishSingleFile=true -r win10-x64 --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
       
     - name: Publish (x86)
-      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86 -p:PublishSingleFile=true -r win10-x86 --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
+      run: dotnet publish ./Ddr.Ssq.AnalyzeTool/ -c Release -o ./publish_86 -p:PublishSingleFile=true -r win10-x86 --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
     
     - name: Publish pupkg (Ssq)
-      run: dotnet pack ./Ssq -c Release -o ./publish_nupkg -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:DebugType=embedded
+      run: dotnet pack ./Ddr.Ssq -c Release -o ./publish_nupkg -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:DebugType=embedded
 
     - name: Publish pupkg (Ssq.AnalyzeTool)
-      run: dotnet pack ./Ssq.AnalyzeTool -c Release -o ./publish_nupkg -p:DebugType=embedded
+      run: dotnet pack ./Ddr.Ssq.AnalyzeTool -c Release -o ./publish_nupkg -p:DebugType=embedded
 
     - uses: actions/upload-artifact@v2
       with:

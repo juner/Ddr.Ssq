@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ssq", "Ssq\Ssq.csproj", "{CFFCB0B9-77A7-4E67-8B1B-523494966FAC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ddr.Ssq", "Ddr.Ssq\Ddr.Ssq.csproj", "{CFFCB0B9-77A7-4E67-8B1B-523494966FAC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FDEA3C62-8173-4117-90E0-A989C4558FF5}"
 	ProjectSection(SolutionItems) = preProject
@@ -14,9 +14,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		global.json = global.json
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ssq.AnalyzeTool", "Ssq.AnalyzeTool\Ssq.AnalyzeTool.csproj", "{DE9B8803-1312-4215-93E0-9C861E7096DE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ddr.Ssq.AnalyzeTool", "Ddr.Ssq.AnalyzeTool\Ddr.Ssq.AnalyzeTool.csproj", "{DE9B8803-1312-4215-93E0-9C861E7096DE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ssq.Tests", "Ssq.Tests\Ssq.Tests.csproj", "{2342214B-4E5D-4203-8DB5-3AE943B11B0C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ddr.Ssq.Tests", "Ddr.Ssq.Tests\Ddr.Ssq.Tests.csproj", "{2342214B-4E5D-4203-8DB5-3AE943B11B0C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
