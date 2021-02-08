@@ -20,10 +20,10 @@ jobs:
         dotnet-version: 5.0.102
  
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore -s https://api.nuget.org/v3/index.json
       
     - name: Build
-      run: dotnet build -c Release --no-restore 
+      run: dotnet build -c Release --no-restore
       
     - name: Test
       run: dotnet test --no-restore --verbosity normal
