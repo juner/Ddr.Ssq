@@ -12,7 +12,7 @@ namespace Ssq.IO.Tests
             get
             {
                 yield return ReadHeaderTest(new MemoryStream(new byte[] { 0x00, 0x00, 0x00, 0x00 }, false), new ChunkHeader());
-                object?[] ReadHeaderTest(Stream Stream, ChunkHeader Expected)
+                static object?[] ReadHeaderTest(Stream Stream, ChunkHeader Expected)
                     => new object?[] { Stream, Expected };
             }
         }

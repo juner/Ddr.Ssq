@@ -20,7 +20,7 @@ jobs:
         dotnet-version: 5.0.102
  
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore -s https://api.nuget.org/v3/index.json
       
     - name: Build
       run: dotnet build -c Release --no-restore
@@ -28,12 +28,34 @@ jobs:
     - name: Test
       run: dotnet test --no-restore --verbosity normal
       
+    - name: Publish (x64) has runtime
+      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_64_r -p:PublishSingleFile=true -r win10-x64 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
+      
+    - name: Publish (x86) has runtime
+      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86_r -p:PublishSingleFile=true -r win10-x86 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
+      
     - name: Publish (x64)
-      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_64 -p:PublishSingleFile=true -r win10-x64 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
+      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_64 -p:PublishSingleFile=true -r win10-x64 --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
       
     - name: Publish (x86)
-      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86 -p:PublishSingleFile=true -r win10-x32 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
-      
+      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86 -p:PublishSingleFile=true -r win10-x86 --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
+    
+    - name: Publish pupkg (Ssq)
+      run: dotnet pack ./Ssq -c Release -o ./publish_nupkg -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
+
+    - name: Publish pupkg (Ssq.AnalyzeTool)
+      run: dotnet pack ./Ssq.AnalyzeTool -c Release -o ./publish_nupkg
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Publish (x64) has runtime
+        path: ./publish_64_r/
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Publish (x86) has runtime
+        path: ./publish_86_r/
+
     - uses: actions/upload-artifact@v2
       with:
         name: Publish (x64)
@@ -43,3 +65,8 @@ jobs:
       with:
         name: Publish (x86)
         path: ./publish_86/
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: nupkg
+        path: ./publish_nupkg/*
