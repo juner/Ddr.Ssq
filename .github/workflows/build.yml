@@ -39,7 +39,13 @@ jobs:
       
     - name: Publish (x86)
       run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86 -p:PublishSingleFile=true -r win10-x86 --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
-      
+    
+    - name: Publish pupkg (Ssq)
+      run: dotnet pack ./Ssq -c Release -o ./publish_nupkg -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
+
+    - name: Publish pupkg (Ssq.AnalyzeTool)
+      run: dotnet pack ./Ssq.AnalyzeTool -c Release -o ./publish_nupkg
+
     - uses: actions/upload-artifact@v2
       with:
         name: Publish (x64) has runtime
@@ -59,3 +65,8 @@ jobs:
       with:
         name: Publish (x86)
         path: ./publish_86/
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Publish (x86)
+        path: ./publish_pupkg/
