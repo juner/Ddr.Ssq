@@ -23,7 +23,7 @@ jobs:
       run: dotnet restore
       
     - name: Build
-      run: dotnet build -c Release --no-restore
+      run: dotnet build -c Release --no-restore 
       
     - name: Test
       run: dotnet test --no-restore --verbosity normal
@@ -32,7 +32,7 @@ jobs:
       run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_64 -p:PublishSingleFile=true -r win10-x64 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
       
     - name: Publish (x86)
-      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86 -p:PublishSingleFile=true -r win10-x32 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
+      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86 -p:PublishSingleFile=true -r win10-x86 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
       
     - uses: actions/upload-artifact@v2
       with:
