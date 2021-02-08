@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Runtime.Serialization;
-using Ssq.Internal;
+using Ddr.Ssq.Internal;
 
-namespace Ssq
+namespace Ddr.Ssq
 {
     public enum ChunkType:short
     {

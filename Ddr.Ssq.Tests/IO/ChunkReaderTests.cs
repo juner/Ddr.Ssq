@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Ssq.IO.Tests
+namespace Ddr.Ssq.IO.Tests
 {
     [TestClass()]
     public class ChunkReaderTests

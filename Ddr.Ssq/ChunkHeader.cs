@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace Ssq
+namespace Ddr.Ssq
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     [DebuggerDisplay("{" + nameof(GetDebuggerDisplay) + "(),nq}")]

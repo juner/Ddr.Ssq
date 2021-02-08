@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Ssq.Internal
+namespace Ddr.Ssq.Internal
 {
     internal class JoinFormatter
     {

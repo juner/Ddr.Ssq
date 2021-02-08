@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using static Ssq.StepType;
-using static Ssq.SoloStepType;
+using static Ddr.Ssq.StepType;
+using static Ddr.Ssq.SoloStepType;
 
-namespace Ssq.Printing
+namespace Ddr.Ssq.Printing
 {
     public static class OutputExtensions
     {
