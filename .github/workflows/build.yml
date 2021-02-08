@@ -68,5 +68,5 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: Publish (x86)
-        path: ./publish_nupkg/
+        name: nupkg
+        path: ./publish_nupkg/*
