@@ -35,10 +35,10 @@ jobs:
       run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86_r -p:PublishSingleFile=true -r win10-x86 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
       
     - name: Publish (x64)
-      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_64 -p:PublishSingleFile=true -r win10-x64 -p:PublishTrimmed=true --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
+      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_64 -p:PublishSingleFile=true -r win10-x64 --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
       
     - name: Publish (x86)
-      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86 -p:PublishSingleFile=true -r win10-x86 -p:PublishTrimmed=true --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
+      run: dotnet publish ./Ssq.AnalyzeTool/ -c Release -o ./publish_86 -p:PublishSingleFile=true -r win10-x86 --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
       
     - uses: actions/upload-artifact@v2
       with:
