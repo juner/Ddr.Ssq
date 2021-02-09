@@ -13,7 +13,6 @@
   <ItemGroup>
     <PackageReference Include="ConsoleAppFramework" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
-    <PackageReference Include="System.Text.Encoding.CodePages" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ddr.Ssq\Ddr.Ssq.csproj" />
