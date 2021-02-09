@@ -107,16 +107,12 @@ namespace Ddr.Ssq.Printing
                 var DeltaOffset = TimeOffset - LastTimeOffset;
                 var DeltaTicks = Chunk.Tempo_TFPS_Config[i] - Chunk.Tempo_TFPS_Config[i - 1];
 
-                var offset_hexD = $"{DeltaOffset,6:X}"[^6..6];
-                var offset_hex0 = $"{LastTimeOffset,6:X}"[^6..6]; //負の表示対応 (DDR A)
-                var offset_hex1 = $"{TimeOffset,6:X}"[^6..6]; //負の表示対応 (DDR A)
-
                 var TfPS = Chunk.Header.Param;
                 var MeasureLength = 4096;
 
                 var bpm = (DeltaOffset / (double)MeasureLength) / ((DeltaTicks / (double)TfPS) / 240);
 
-                yield return $"[01:BPM][({offset_hex0,6}:{offset_hex1,6:X}) {LastTimeOffset,8}:{TimeOffset,8}][BPM:{bpm:F5}] Delta> Offset:({offset_hexD,6}){DeltaOffset,7} / ({DeltaTicks,5:X}){DeltaTicks,7} ";
+                yield return $"[01:BPM][({LastTimeOffset,8:X}:{TimeOffset,8:X}) {LastTimeOffset,8}:{TimeOffset,8}][BPM:{bpm:F5}] Delta> Offset:({DeltaOffset,6:X}){DeltaOffset,7} / Ticks:({DeltaTicks,5:X}){DeltaTicks,7} ";
             }
         }
         /// <summary>
@@ -136,9 +132,8 @@ namespace Ddr.Ssq.Printing
                 var LastTimeOffset = i is 0 ? 0 : Chunk.TimeOffsets[i - 1];
 
                 var DeltaOffset = i is 0 ? 0 : TimeOffset - LastTimeOffset;
-                var offset_hexD = $"{DeltaOffset,6:X}"[^6..6];
                 var ConfigType = Chunk.Bigin_Finish_Config[i];
-                yield return $"[02:BFC][({TimeOffset,6:X}) {TimeOffset,8}][func.{(short)ConfigType,4:X}: {Chunk.Bigin_Finish_Config[i].ToMemberName(),-18} ] Delta> Offset:({offset_hexD,6}){DeltaOffset,7} ";
+                yield return $"[02:BFC][({TimeOffset,6:X}) {TimeOffset,8}][func.{(short)ConfigType,4:X}: {Chunk.Bigin_Finish_Config[i].ToMemberName(),-18} ] Delta> Offset:({DeltaOffset,6:X}){DeltaOffset,7} ";
             }
         }
         /// <summary>
