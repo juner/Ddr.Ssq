@@ -116,7 +116,7 @@ namespace Ddr.Ssq.Printing
 
                 var bpm = (DeltaOffset / (double)MeasureLength) / ((DeltaTicks / (double)TfPS) / 240);
 
-                yield return $"[01:BPM][({offset_hex0,6}:{offset_hex1,6}) {LastTimeOffset,8}:{TimeOffset,8}][BPM:{bpm:F5}] Delta> Offset:({offset_hexD,6}){DeltaOffset,7} / ({DeltaTicks,5:X}){DeltaTicks,7} ";
+                yield return $"[01:BPM][({offset_hex0,6}:{offset_hex1,6:X}) {LastTimeOffset,8}:{TimeOffset,8}][BPM:{bpm:F5}] Delta> Offset:({offset_hexD,6}){DeltaOffset,7} / ({DeltaTicks,5:X}){DeltaTicks,7} ";
             }
         }
         /// <summary>
@@ -133,13 +133,12 @@ namespace Ddr.Ssq.Printing
             for (var i = 0; i < Chunk.Header.Entry; i++)
             {
                 var TimeOffset = Chunk.TimeOffsets[i];
-                var offset_hex1 = $"{TimeOffset,6:X}"[^6..6];
                 var LastTimeOffset = i is 0 ? 0 : Chunk.TimeOffsets[i - 1];
-                var offset_hexD = i is 0 ? "0" : $"{TimeOffset - Chunk.TimeOffsets[i - 1]:X6}"[^6..6];
 
-                var DeltaOffset = TimeOffset - LastTimeOffset;
+                var DeltaOffset = i is 0 ? 0 : TimeOffset - LastTimeOffset;
+                var offset_hexD = $"{DeltaOffset,6:X}"[^6..6];
                 var ConfigType = Chunk.Bigin_Finish_Config[i];
-                yield return $"[02:BFC][({offset_hex1,6}) {TimeOffset,8}][func.{(short)ConfigType,4:X}: {Chunk.Bigin_Finish_Config[i].ToMemberName(),-18} ] Delta> Offset:({offset_hexD,6}){DeltaOffset,7} ";
+                yield return $"[02:BFC][({TimeOffset,6:X}) {TimeOffset,8}][func.{(short)ConfigType,4:X}: {Chunk.Bigin_Finish_Config[i].ToMemberName(),-18} ] Delta> Offset:({offset_hexD,6}){DeltaOffset,7} ";
             }
         }
         /// <summary>
@@ -159,7 +158,7 @@ namespace Ddr.Ssq.Printing
             {
                 var TimeOffset = Chunk.TimeOffsets[i];
                 var LastTimeOffset = i is 0 ? 0 : Chunk.TimeOffsets[i - 1];
-                var DeltaOffset = TimeOffset - LastTimeOffset;
+                var DeltaOffset = i is 0 ? 0 : TimeOffset - LastTimeOffset;
                 var Step = Chunk.Header.PlayStyle switch
                 {
                     PlayStyle.Single
