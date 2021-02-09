@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Ddr.Ssq.Printing;
 using Ddr.Ssq.IO;
+using System.Text;
 
 namespace Ddr.Ssq.AnalyzeTool
 {
@@ -15,6 +16,7 @@ namespace Ddr.Ssq.AnalyzeTool
     {
         static async Task Main(string[] args)
         {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             await CreateDefaultBuilder(args)
                 .RunConsoleAppFrameworkAsync<Program>(args);
         }
@@ -59,6 +61,7 @@ namespace Ddr.Ssq.AnalyzeTool
                 foreach (var c in Configuration.AsEnumerable())
                     Logger.LogDebug("[{key}]: {value}", c.Key, c.Value);
             }
+            Logger.LogDebug($"Console.OutputEncoding.WebName:{Console.OutputEncoding.WebName}");
         }
         /// <summary>
         /// ファイル読み込みして情報を表示する機能
