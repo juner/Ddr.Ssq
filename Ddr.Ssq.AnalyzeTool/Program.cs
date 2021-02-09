@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Ddr.Ssq.Printing;
 using Ddr.Ssq.IO;
+using System.Text;
 
 namespace Ddr.Ssq.AnalyzeTool
 {
@@ -59,6 +60,7 @@ namespace Ddr.Ssq.AnalyzeTool
                 foreach (var c in Configuration.AsEnumerable())
                     Logger.LogDebug("[{key}]: {value}", c.Key, c.Value);
             }
+            Logger.LogDebug($"Console.OutputEncoding.WebName:{Console.OutputEncoding.WebName}");
         }
         /// <summary>
         /// ファイル読み込みして情報を表示する機能
@@ -76,7 +78,8 @@ namespace Ddr.Ssq.AnalyzeTool
                 Console.WriteLine($"file not found: {FullPath}");
                 return 9;
             }
-            using var Stream = new FileStream(FileName, FileMode.Open, FileAccess.Read);
+            var FileInfo = new FileInfo(FullPath);
+            using var Stream = FileInfo.Open(FileMode.Open, FileAccess.Read);
             using var Reader = new ChunkReader(Stream, true)
             {
                 Logger = LoggerFactory.CreateLogger<ChunkReader>(),
