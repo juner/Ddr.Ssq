@@ -86,7 +86,7 @@ namespace Ddr.Ssq.AnalyzeTool
             {
                 var Chunks = Reader.ReadToEnd().ToList();
                 Console.WriteLine();
-                Console.WriteLine($"###[ {FileName} , Length: ({Stream.Length}) Byte(s) ]###");
+                Console.WriteLine($"###[ {FileName} , Length: {Stream.Length} Byte(s) ]###");
                 Console.Out.WriteChunckSummary(Chunks);
                 foreach (var Chunk in Chunks)
                     Console.Out.WriteChunkBodyInfo(Chunk);
