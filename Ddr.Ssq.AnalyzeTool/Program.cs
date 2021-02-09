@@ -76,7 +76,8 @@ namespace Ddr.Ssq.AnalyzeTool
                 Console.WriteLine($"file not found: {FullPath}");
                 return 9;
             }
-            using var Stream = new FileStream(FileName, FileMode.Open, FileAccess.Read);
+            var FileInfo = new FileInfo(FullPath);
+            using var Stream = FileInfo.Open(FileMode.Open, FileAccess.Read);
             using var Reader = new ChunkReader(Stream, true)
             {
                 Logger = LoggerFactory.CreateLogger<ChunkReader>(),
@@ -85,7 +86,7 @@ namespace Ddr.Ssq.AnalyzeTool
             {
                 var Chunks = Reader.ReadToEnd().ToList();
                 Console.WriteLine();
-                Console.WriteLine($"###[ {FileName} , Length: {Stream.Length} Byte(s) ]###");
+                Console.WriteLine($"###[ {FileName} , Length: ({Stream.Length}) Byte(s) ]###");
                 Console.Out.WriteChunckSummary(Chunks);
                 foreach (var Chunk in Chunks)
                     Console.Out.WriteChunkBodyInfo(Chunk);
