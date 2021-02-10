@@ -240,6 +240,8 @@ namespace Ddr.Ssq.Printing
                 static T Shift<T>(IList<T> Value)
                 {
                     var Count = Value.Count;
+                    if (Value.Count == 0)
+                        return default(T)!;
                     var V = Value[Count - 1];
                     Value.RemoveAt(Count - 1);
                     return V;
