@@ -17,11 +17,12 @@ namespace Ddr.Ssq.IO
     {
         readonly Stream Stream;
         readonly bool LeaveOpen;
-        public ILogger<ChunkReader> Logger { get; init; } = NullLogger<ChunkReader>.Instance; 
-        public ChunkReader(Stream Stream) : this(Stream, false, default!) { }
-        public ChunkReader(Stream Stream, bool LeaveOpen) : this(Stream,LeaveOpen, default!) { }
-        public ChunkReader(Stream Stream, bool LeaveOpen, ILogger<ChunkReader> Logger)
-            => (this.Stream, this.LeaveOpen, this.Logger) = (Stream, LeaveOpen, Logger ?? NullLogger<ChunkReader>.Instance);
+        readonly MemoryPool<byte> Pool;
+        public ILogger<ChunkReader> Logger { get; init; } = NullLogger<ChunkReader>.Instance;
+        public ChunkReader(Stream Stream) : this(Stream, false, default!, default!) { }
+        public ChunkReader(Stream Stream, bool LeaveOpen) : this(Stream, LeaveOpen, default!, default!) { }
+        public ChunkReader(Stream Stream, bool LeaveOpen, MemoryPool<byte> Pool, ILogger<ChunkReader> Logger)
+            => (this.Stream, this.LeaveOpen, this.Pool, this.Logger) = (Stream, LeaveOpen, Pool ?? MemoryPool<byte>.Shared, Logger ?? NullLogger<ChunkReader>.Instance);
         public IEnumerable<Chunk> ReadToEnd()
         {
             Logger.LogDebug("START ChunkReader.ReadToEnd()");
@@ -60,50 +61,29 @@ namespace Ddr.Ssq.IO
         public ChunkHeader ReadHeader()
         {
             Logger.LogDebug("read header");
-            var buffer = ArrayPool<byte>.Shared.Rent(HeaderSize);
-            try
-            {
-                var span = buffer.AsSpan().Slice(0, HeaderSize);
-                var readed = Stream.Read(span);
-                if(Logger.IsEnabled(LogLevel.Trace))
-                    Logger.LogTrace("[{header}]", new JoinFormatter(" ", buffer[..readed].ToArray().Select(v => $"{v,2:X2}")));
-                if (Stream.CanSeek)
-                    Logger.LogDebug(" -> readed:{readed} Position:{Position}", readed, Stream.Position);
-                else
-                    Logger.LogDebug(" -> readed:{readed}", readed);
-                if (readed < HeaderSize)
-                    SetZero(span[readed..]);
-                var header = MemoryMarshal.Read<ChunkHeader>(span);
-                Logger.LogDebug("-> {header}", header.GetDebuggerDisplay());
-                return header;
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buffer);
-            }
+            using var buffer = Pool.Rent(HeaderSize);
+            var memory = buffer.Memory;
+            var span = memory.Span[..HeaderSize];
+            var readed = Stream.Read(span);
+            Logger.LogReaded(Stream, readed, memory[..readed].Span);
+            if (readed < HeaderSize)
+                SetZero(span[readed..]);
+            var header = MemoryMarshal.Read<ChunkHeader>(span);
+            Logger.LogDebug("-> {header}", header.GetDebuggerDisplay());
+            return header;
         }
         public async ValueTask<ChunkHeader> ReadHeaderAsync(CancellationToken Token)
         {
             Logger.LogDebug("read header");
-            var buffer = ArrayPool<byte>.Shared.Rent(HeaderSize);
-            try
-            {
-                var memory = buffer.AsMemory();
-                var readed = await Stream.ReadAsync(memory, Token);
-                if (Stream.CanSeek)
-                    Logger.LogDebug(" -> readed:{readed} Position:{Position}", readed, Stream.Position);
-                else
-                    Logger.LogDebug(" -> readed:{readed}", readed);
-                if (readed < HeaderSize)
-                    SetZero(memory[readed..].Span);
-                var header = MemoryMarshal.Read<ChunkHeader>(memory.Span);
-                Logger.LogDebug("-> {header}", header.GetDebuggerDisplay());
-                return header;
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buffer);
-            }
+            using var buffer = Pool.Rent(HeaderSize);
+            var memory = buffer.Memory[..HeaderSize];
+            var readed = await Stream.ReadAsync(memory, Token);
+            Logger.LogReaded(Stream, readed, memory[..readed].Span);
+            if (readed < HeaderSize)
+                SetZero(memory[readed..].Span);
+            var header = MemoryMarshal.Read<ChunkHeader>(memory.Span);
+            Logger.LogDebug("-> {header}", header.GetDebuggerDisplay());
+            return header;
         }
         static void SetZero(Span<byte> span)
         {
@@ -140,15 +120,15 @@ namespace Ddr.Ssq.IO
                         Size += UseSize;
                         Logger.LogDebug("{_Size} + {Entry} * {uint} -> {Size} Length:{Length}", _Size, Entry, sizeof(uint), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
-                        using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
-                        var TimeOffsets = new int[Entry];
-                        for (var i = 0; i < Entry; i++)
-                        {
-                            TimeOffsets[i] = Reader.ReadInt32();
-                        }
+                        using var buffer = Pool.Rent(UseSize);
+                        var Span = buffer.Memory.Span[..UseSize];
+                        var readed = Stream.Read(Span);
+                        Logger.LogReaded(Stream, readed, Span[..readed]);
+                        Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
+
+                        var TimeOffsets = MemoryMarshal.Cast<byte, int>(Span).ToArray();
                         Chunk.TimeOffsets = TimeOffsets;
-                        if (Logger.IsEnabled(LogLevel.Debug))
-                            Logger.LogDebug(nameof(TimeOffsets) + " [{TimeOffsets}]", new JoinFormatter(" ", TimeOffsets.Select(v => $"{v:X8}")));
+                        Logger.LogResult(nameof(Chunk.TimeOffsets), TimeOffsets);
                     }
                     break;
             }
@@ -159,35 +139,35 @@ namespace Ddr.Ssq.IO
                 case ChunkType.Tempo_TFPS_Config:
                     {
                         var _Size = Size;
-                        Size += Entry * sizeof(int);
-                        Logger.LogDebug("{_Size} + {Entry} * {int} -> {Size} Length:{Length}", _Size, Entry, sizeof(int), Size,Length);
+                        var UseSize = Entry * sizeof(int);
+                        Size += UseSize;
+                        Logger.LogDebug("{_Size} + {Entry} * {int} -> {Size} Length:{Length}", _Size, Entry, sizeof(int), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
-                        using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
-                        var Tempo_TFPS_Config = new int[Entry];
-                        for (var i = 0; i < Entry; i++)
-                        {
-                            Tempo_TFPS_Config[i] = Reader.ReadInt32();
-                        }
+                        using var buffer = Pool.Rent(UseSize);
+                        var Span = buffer.Memory.Span[..UseSize];
+                        var readed = Stream.Read(Span);
+                        Logger.LogReaded(Stream, readed, Span[..readed]);
+                        Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
+                        var Tempo_TFPS_Config = MemoryMarshal.Cast<byte, int>(Span).ToArray();
                         Chunk.Tempo_TFPS_Config = Tempo_TFPS_Config;
-                        if (Logger.IsEnabled(LogLevel.Debug))
-                            Logger.LogDebug(nameof(Tempo_TFPS_Config) + " [{Tempo_TFPS_Config}]", new JoinFormatter(" ", Tempo_TFPS_Config.Select(v => $"{v:X8}")));
+                        Logger.LogResult(nameof(Chunk.Tempo_TFPS_Config), Tempo_TFPS_Config);
                     }
                     break;
                 case ChunkType.Bigin_Finish_Config:
                     {
                         var _Size = Size;
-                        Size += Entry * sizeof(short);
+                        var UseSize = Entry * sizeof(short);
+                        Size += UseSize;
                         Logger.LogDebug("{_Size} + {Entry} * {short} -> {Size} Length:{Length}", _Size, Entry, sizeof(short), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
-                        using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
-                        var Bigin_Finish_Config = new BiginFinishConfigType[Entry];
-                        for (var i = 0; i < Entry; i++)
-                        {
-                            Bigin_Finish_Config[i] = (BiginFinishConfigType)Reader.ReadInt16();
-                        }
+                        using var buffer = Pool.Rent(UseSize);
+                        var Span = buffer.Memory.Span[..UseSize];
+                        var readed = Stream.Read(Span);
+                        Logger.LogReaded(Stream, readed, Span[..readed]);
+                        Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
+                        var Bigin_Finish_Config = MemoryMarshal.Cast<byte, BiginFinishConfigType>(Span).ToArray();
                         Chunk.Bigin_Finish_Config = Bigin_Finish_Config;
-                        if (Logger.IsEnabled(LogLevel.Debug))
-                            Logger.LogDebug(nameof(Bigin_Finish_Config) + " [{Bigin_Finish_Config}]", new JoinFormatter(" ", Bigin_Finish_Config.Select(v => $"{(short)v:X4}")));
+                        Logger.LogResult(nameof(Chunk.Bigin_Finish_Config), Bigin_Finish_Config.Cast<short>());
                     }
                     break;
                 case ChunkType.StepData:
@@ -197,15 +177,14 @@ namespace Ddr.Ssq.IO
                         Size += UseSize;
                         Logger.LogDebug("{_Size} + {Entry} * {int} -> {Size} Length:{Length}", _Size, Entry, sizeof(int), Size, Length);
                         Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
-                        using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
-                        var StepData = new byte[Entry];
-                        for (var i = 0; i < Entry; i++)
-                        {
-                            StepData[i] = Reader.ReadByte();
-                        }
+                        using var buffer = Pool.Rent(UseSize);
+                        var Span = buffer.Memory.Span[..UseSize];
+                        var readed = Stream.Read(Span);
+                        Logger.LogReaded(Stream, readed, Span[..readed]);
+                        Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
+                        var StepData = Span.ToArray();
                         Chunk.StepData = StepData;
-                        if (Logger.IsEnabled(LogLevel.Debug))
-                            Logger.LogDebug(nameof(StepData) + " [{StepData}]", new JoinFormatter(" ", StepData.Select(v => $"{v,2:X2}")));
+                        Logger.LogResult(nameof(Chunk.StepData), StepData);
                     }
                     break;
             }
@@ -215,13 +194,14 @@ namespace Ddr.Ssq.IO
                 var UseSize = Length - _Size;
                 Size += UseSize;
                 Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
-                using var Reader = new BinaryReader(Stream, Encoding.UTF8, true);
-                var OtherData = new byte[UseSize];
-                var result = Stream.Read(OtherData.AsSpan());
-                Debug.Assert(result == UseSize, $"miss match size Result:{result} UseSize:{UseSize}");
+                using var buffer = Pool.Rent(UseSize);
+                var Span = buffer.Memory.Span[..UseSize];
+                var readed = Stream.Read(Span);
+                Logger.LogReaded(Stream, readed, Span[..readed]);
+                Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
+                var OtherData = Span.ToArray();
                 Chunk.OtherData = OtherData;
-                if (Logger.IsEnabled(LogLevel.Debug))
-                    Logger.LogDebug(nameof(OtherData) + " [{OtherData}]", new JoinFormatter(" ", OtherData.Select(v => $"{v:X2}")));
+                Logger.LogResult(nameof(Chunk.OtherData), OtherData);
             }
             Debug.Assert(Size == Length, $"has no read byte. Size:{Size} Length:{Length}");
         }
@@ -230,6 +210,34 @@ namespace Ddr.Ssq.IO
             if (!LeaveOpen)
                 Stream.Dispose();
             GC.SuppressFinalize(this);
+        }
+    }
+    static class Log
+    {
+        static readonly Action<ILogger, JoinFormatter, Exception?> dataReadLog = LoggerMessage.Define<JoinFormatter>(LogLevel.Trace, new EventId(0, "DataLoadTrace"), "[{data}]");
+        static readonly Action<ILogger, int, long, Exception?> readedAndPositionLog = LoggerMessage.Define<int, long>(LogLevel.Debug, new EventId(0, "DataLoad"), " -> readed:{readed} Position:{Position}");
+        static readonly Action<ILogger, int, Exception?> readedLog = LoggerMessage.Define<int>(LogLevel.Debug, new EventId(0, "DataLoad"), " -> readed:{readed}");
+        static readonly Action<ILogger, string, JoinFormatter, Exception?> resultLog = LoggerMessage.Define<string, JoinFormatter>(LogLevel.Debug, new EventId(0, "LoadResult"), "{ResultName} [{OtherData}]");
+        /// <summary>
+        /// <see cref="Stream"/> 読み込み時のログ
+        /// </summary>
+        /// <param name="Logger"></param>
+        /// <param name="Stream"></param>
+        /// <param name="readed"></param>
+        /// <param name="Memory"></param>
+        public static void LogReaded(this ILogger Logger, Stream Stream, int readed, Span<byte> Memory)
+        {
+            if (Logger.IsEnabled(LogLevel.Trace))
+                dataReadLog(Logger, new JoinFormatter(" ", Memory.ToArray().Select(v => $"{v,2:X2}")), null);
+            if (Stream.CanSeek)
+                readedAndPositionLog(Logger, readed, Stream.Position, null);
+            else
+                readedLog(Logger, readed, null);
+        }
+        public static void LogResult<T>(this ILogger Logger, string ResultName, IEnumerable<T> ResultArray)
+        {
+            if (Logger.IsEnabled(LogLevel.Debug))
+                resultLog(Logger, ResultName, new JoinFormatter(" ", ResultArray.Select(v => string.Format("{0:X" + (Marshal.SizeOf<T>() * 2) + "}", v))), null);
         }
     }
 }
