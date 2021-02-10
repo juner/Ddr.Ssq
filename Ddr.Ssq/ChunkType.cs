@@ -18,6 +18,6 @@ namespace Ddr.Ssq
     public static class ChunktypeExtensions
     {
         public static string ToMemberName(this ChunkType Type)
-            => Type.GetAttribute<EnumMemberAttribute>(ThrowNotFoundFiled: false)?.Value ?? "Unkown";
+            => Type.GetAttribute<EnumMemberAttribute>(ThrowNotFoundFiled: false)?.Value ?? "Unknown Data.";
     }
 }
