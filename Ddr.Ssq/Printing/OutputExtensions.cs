@@ -146,7 +146,7 @@ namespace Ddr.Ssq.Printing
             const ChunkType BASE_TYPE = ChunkType.StepData;
             if (Chunk.Header.Type is not BASE_TYPE)
                 throw new ArgumentException($"{nameof(Chunk)} type is not {BASE_TYPE}({(short)BASE_TYPE:X}). {nameof(Chunk.Header.Type)} : {Chunk.Header.Type}({(short)Chunk.Header.Type:X})", nameof(Chunk));
-            var lastStep = new List<byte>();
+            var lastStep = new Queue<byte>();
             var lastCount = 0;
 
             for (var i = 0; i < Chunk.Header.Entry; i++)
@@ -171,7 +171,7 @@ namespace Ddr.Ssq.Printing
                 Step[12] = $":{_step:X2}";
                 if (_step is 0)
                 {
-                    var l = Shift(lastStep);
+                    var l = lastStep.Any() ? lastStep.Dequeue() : 0;
                     Step[l] = "＃";
                     var p = l switch
                     {
@@ -190,10 +190,10 @@ namespace Ddr.Ssq.Printing
                         or PlayStyle.Battle) //solo以外
                     {
                         var s = (StepType)_step;
-                        if ((s & Player1Left) > 0) { Step[1] = "←"; lastStep.Add(1); lastCount++; }
-                        if ((s & Player1Down) > 0) { Step[2] = "↓"; lastStep.Add(2); lastCount++; }
-                        if ((s & Player1Up) > 0) { Step[3] = "↑"; lastStep.Add(3); lastCount++; }
-                        if ((s & Player1Right) > 0) { Step[4] = "→"; lastStep.Add(4); lastCount++; }
+                        if ((s & Player1Left) > 0) { Step[1] = "←"; lastStep.Enqueue(1); lastCount++; }
+                        if ((s & Player1Down) > 0) { Step[2] = "↓"; lastStep.Enqueue(2); lastCount++; }
+                        if ((s & Player1Up) > 0) { Step[3] = "↑"; lastStep.Enqueue(3); lastCount++; }
+                        if ((s & Player1Right) > 0) { Step[4] = "→"; lastStep.Enqueue(4); lastCount++; }
                         if ((s & Player1Special) == Player1Special) // Shock Arrow
                         { Step[1] = "◆"; Step[2] = "◆"; Step[3] = "◆"; Step[4] = "◆"; Step[5] = "衝"; }
 
@@ -236,16 +236,6 @@ namespace Ddr.Ssq.Printing
                     }
                 }
                 yield return $"[03:STP][({TimeOffset,6:X}) {TimeOffset,8}][{string.Join("", Step)}] Delta> Offset:({DeltaOffset,6:X}){DeltaOffset,7} ";
-
-                static T Shift<T>(IList<T> Value)
-                {
-                    var Count = Value.Count;
-                    if (Value.Count == 0)
-                        return default(T)!;
-                    var V = Value[Count - 1];
-                    Value.RemoveAt(Count - 1);
-                    return V;
-                }
             }
         }
     }
