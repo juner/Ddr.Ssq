@@ -53,6 +53,12 @@ namespace Ddr.Ssq.Printing
                 Writer.Flush();
             }
         }
+        static readonly Dictionary<Encoding, CharMappingType> MappingType = new();
+        public enum CharMappingType {
+            Unicode =0,
+            ANSI = 1,
+            ASCII = 2,
+        }
         /// <summary>
         /// Write Text Chunk Body Info,
         /// see <a href="https://github.com/pumpCurry/ssqcheck/blob/bb5a9a8181beae7af681612c5f85152f2548cfaa/ssqcheck.php#L265-L446">pumpCurry/ssqcheck/ssqcheck.php</a>
@@ -71,12 +77,23 @@ namespace Ddr.Ssq.Printing
                     _
                         => $"[[[{(short)Chunk.Header.Type,2:X2}:{Chunk.Header.Type.ToMemberName(),-20}]]]",
                 });
+                if(!MappingType.TryGetValue(Writer.Encoding, out var Type)){
+                    if(Writer.Encoding.GetString(Writer.Encoding.GetBytes("↗")) == "↗"){
+                        Type = CharMappingType.Unicode;
+                    } else if (Writer.Encoding.GetString(Writer.Encoding.GetBytes("／")) == "／")
+                    {
+                        Type = CharMappingType.ANSI;
+                    } else {
+                        Type = CharMappingType.ASCII;
+                    }
+                    MappingType.TryAdd(Writer.Encoding, Type);
+                }
                 var Lines = Chunk.Header.Type switch
                 {
                     ChunkType.EndOfFile => Enumerable.Empty<string>(),
                     ChunkType.Tempo_TFPS_Config => Tempo_TFPS_ConfigToFormatEnumerable(Chunk),
                     ChunkType.Bigin_Finish_Config => Bigin_Finish_ConfigToFormatEnumerable(Chunk),
-                    ChunkType.StepData => StepDataToFormatEnumerable(Chunk),
+                    ChunkType.StepData => StepDataToFormatEnumerable(Chunk, Type),
                     _ => Enumerable.Empty<string>(),
                 };
                 foreach (var Line in Lines)
@@ -141,11 +158,40 @@ namespace Ddr.Ssq.Printing
         /// </summary>
         /// <param name="Chunk"></param>
         /// <returns></returns>
-        public static IEnumerable<string> StepDataToFormatEnumerable(Chunk Chunk)
+        public static IEnumerable<string> StepDataToFormatEnumerable(Chunk Chunk, CharMappingType type = default)
         {
             const ChunkType BASE_TYPE = ChunkType.StepData;
             if (Chunk.Header.Type is not BASE_TYPE)
                 throw new ArgumentException($"{nameof(Chunk)} type is not {BASE_TYPE}({(short)BASE_TYPE:X}). {nameof(Chunk.Header.Type)} : {Chunk.Header.Type}({(short)Chunk.Header.Type:X})", nameof(Chunk));
+            string LeftArrow;
+            string RightArrow;
+            string UpArrow;
+            string DownArrow;
+            string NorthEastArrow;
+            string NorthWestArrow;
+            string ShockArrow;
+            switch (type) {
+                default:
+                case CharMappingType.Unicode:
+                    LeftArrow = "←";
+                    RightArrow = "→";
+                    UpArrow = "↑";
+                    DownArrow = "↓";
+                    NorthEastArrow = "↗";
+                    NorthWestArrow = "↖";
+                    ShockArrow = "◆";
+                break;
+                case CharMappingType.ASCII:
+                case CharMappingType.ANSI:
+                    LeftArrow = "←";
+                    RightArrow = "→";
+                    UpArrow = "↑";
+                    DownArrow = "↓";
+                    NorthEastArrow = "／";
+                    NorthWestArrow = "＼";
+                    ShockArrow = "◆";
+                break;
+            }
             var lastStep = new Queue<byte>();
             var lastCount = 0;
 
@@ -192,12 +238,12 @@ namespace Ddr.Ssq.Printing
                         or PlayStyle.Battle) //solo以外
                     {
                         var s = (StepType)_step;
-                        if ((s & Player1Left) > 0) { Step[1] = "←"; lastStep.Enqueue(1); lastCount++; }
-                        if ((s & Player1Down) > 0) { Step[2] = "↓"; lastStep.Enqueue(2); lastCount++; }
-                        if ((s & Player1Up) > 0) { Step[3] = "↑"; lastStep.Enqueue(3); lastCount++; }
-                        if ((s & Player1Right) > 0) { Step[4] = "→"; lastStep.Enqueue(4); lastCount++; }
+                        if ((s & Player1Left) > 0) { Step[1] = LeftArrow; lastStep.Enqueue(1); lastCount++; }
+                        if ((s & Player1Down) > 0) { Step[2] = DownArrow; lastStep.Enqueue(2); lastCount++; }
+                        if ((s & Player1Up) > 0) { Step[3] = UpArrow; lastStep.Enqueue(3); lastCount++; }
+                        if ((s & Player1Right) > 0) { Step[4] = RightArrow; lastStep.Enqueue(4); lastCount++; }
                         if ((s & Player1Special) == Player1Special) // Shock Arrow
-                        { Step[1] = "◆"; Step[2] = "◆"; Step[3] = "◆"; Step[4] = "◆"; Step[5] = "衝"; }
+                        { Step[1] = ShockArrow; Step[2] = ShockArrow; Step[3] = ShockArrow; Step[4] = ShockArrow; Step[5] = ShockArrow; }
 
                         if (i < Chunk.Header.Entry - 1)
                         {
@@ -209,12 +255,12 @@ namespace Ddr.Ssq.Printing
                         is PlayStyle.Solo)
                     {
                         var s = (SoloStepType)_step;
-                        if ((s & SoloPlayerLeft) > 0) { Step[0] = "←"; }
-                        if ((s & SoloPlayerNorthWest) > 0) { Step[1] = "↖"; }
-                        if ((s & SoloPlayerDown) > 0) { Step[2] = "↓"; }
-                        if ((s & SoloPlayerUp) > 0) { Step[3] = "↑"; }
-                        if ((s & SoloPlayerNorthEast) > 0) { Step[4] = "↗"; }
-                        if ((s & SoloPlayerRight) > 0) { Step[5] = "→"; }
+                        if ((s & SoloPlayerLeft) > 0) { Step[0] = LeftArrow; }
+                        if ((s & SoloPlayerNorthWest) > 0) { Step[1] = NorthWestArrow; }
+                        if ((s & SoloPlayerDown) > 0) { Step[2] = DownArrow; }
+                        if ((s & SoloPlayerUp) > 0) { Step[3] = UpArrow; }
+                        if ((s & SoloPlayerNorthEast) > 0) { Step[4] = NorthEastArrow; }
+                        if ((s & SoloPlayerRight) > 0) { Step[5] = RightArrow; }
                     }
 
                     if (Chunk.Header.PlayStyle
@@ -222,13 +268,13 @@ namespace Ddr.Ssq.Printing
                         or PlayStyle.Battle)
                     {
                         var s = (StepType)_step;
-                        if ((s & Player2Left) > 0) { Step[7] = "←"; lastStep.Enqueue(7); lastCount++; }
-                        if ((s & Player2Down) > 0) { Step[8] = "↓"; lastStep.Enqueue(8); lastCount++; }
-                        if ((s & Player2Up) > 0) { Step[9] = "↑"; lastStep.Enqueue(9); lastCount++; }
-                        if ((s & Player2Right) > 0) { Step[10] = "→"; lastStep.Enqueue(10); lastCount++; }
+                        if ((s & Player2Left) > 0) { Step[7] = LeftArrow; lastStep.Enqueue(7); lastCount++; }
+                        if ((s & Player2Down) > 0) { Step[8] = DownArrow; lastStep.Enqueue(8); lastCount++; }
+                        if ((s & Player2Up) > 0) { Step[9] = UpArrow; lastStep.Enqueue(9); lastCount++; }
+                        if ((s & Player2Right) > 0) { Step[10] = RightArrow; lastStep.Enqueue(10); lastCount++; }
 
                         if ((s & Player2Special) == Player2Special) //Shock Arrow
-                        { Step[7] = "◆"; Step[8] = "◆"; Step[9] = "◆"; Step[10] = "◆"; Step[6] = "衝"; }
+                        { Step[7] = ShockArrow; Step[8] = ShockArrow; Step[9] = ShockArrow; Step[10] = ShockArrow; Step[6] = "衝"; }
 
                         if (i < Chunk.Header.Entry - 1)
                         {

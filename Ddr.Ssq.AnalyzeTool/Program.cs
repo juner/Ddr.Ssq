@@ -16,6 +16,7 @@ namespace Ddr.Ssq.AnalyzeTool
     {
         static async Task Main(string[] args)
         {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             await CreateDefaultBuilder(args)
                 .RunConsoleAppFrameworkAsync<Program>(args);
         }
