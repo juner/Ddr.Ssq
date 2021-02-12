@@ -170,6 +170,7 @@ namespace Ddr.Ssq.Printing
                 var _step = Chunk.StepData[i];
                 Step[12] = $":{_step:X2}";
                 if (_step is 0)
+                // freeze arrow判定
                 {
                     var l = lastStep.Any() ? lastStep.Dequeue() : 0;
                     Step[l] = "＃";
@@ -181,6 +182,7 @@ namespace Ddr.Ssq.Printing
                     Step[p] = $"L{(lastCount - lastStep.Count)}";
                 }
                 else
+                // nomal arrow or shock arrow
                 {
                     lastStep.Clear();
                     lastCount = 0;
@@ -220,10 +222,10 @@ namespace Ddr.Ssq.Printing
                         or PlayStyle.Battle)
                     {
                         var s = (StepType)_step;
-                        if ((s & Player2Left) > 0) { Step[7] = "←"; }
-                        if ((s & Player2Down) > 0) { Step[8] = "↓"; }
-                        if ((s & Player2Up) > 0) { Step[9] = "↑"; }
-                        if ((s & Player2Right) > 0) { Step[10] = "→"; }
+                        if ((s & Player2Left) > 0) { Step[7] = "←"; lastStep.Enqueue(7); lastCount++; }
+                        if ((s & Player2Down) > 0) { Step[8] = "↓"; lastStep.Enqueue(8); lastCount++; }
+                        if ((s & Player2Up) > 0) { Step[9] = "↑"; lastStep.Enqueue(9); lastCount++; }
+                        if ((s & Player2Right) > 0) { Step[10] = "→"; lastStep.Enqueue(10); lastCount++; }
 
                         if ((s & Player2Special) == Player2Special) //Shock Arrow
                         { Step[7] = "◆"; Step[8] = "◆"; Step[9] = "◆"; Step[10] = "◆"; Step[6] = "衝"; }
