@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using static Ddr.Ssq.StepType;
 using static Ddr.Ssq.SoloStepType;
+using System.Diagnostics;
 
 namespace Ddr.Ssq.Printing
 {
@@ -53,19 +54,13 @@ namespace Ddr.Ssq.Printing
                 Writer.Flush();
             }
         }
-        static readonly Dictionary<Encoding, CharMappingType> MappingType = new();
-        public enum CharMappingType {
-            Unicode =0,
-            ANSI = 1,
-            ASCII = 2,
-        }
         /// <summary>
         /// Write Text Chunk Body Info,
         /// see <a href="https://github.com/pumpCurry/ssqcheck/blob/bb5a9a8181beae7af681612c5f85152f2548cfaa/ssqcheck.php#L265-L446">pumpCurry/ssqcheck/ssqcheck.php</a>
         /// </summary>
         /// <param name="Writer"></param>
         /// <param name="Chunk"></param>
-        public static void WriteChunkBodyInfo(this TextWriter Writer, Chunk Chunk)
+        public static void WriteChunkBodyInfo(this TextWriter Writer, Chunk Chunk, OutputOptions? Options = null)
         {
             var Builder = new StringBuilder();
             try
@@ -77,23 +72,13 @@ namespace Ddr.Ssq.Printing
                     _
                         => $"[[[{(short)Chunk.Header.Type,2:X2}:{Chunk.Header.Type.ToMemberName(),-20}]]]",
                 });
-                if(!MappingType.TryGetValue(Writer.Encoding, out var Type)){
-                    if(Writer.Encoding.GetString(Writer.Encoding.GetBytes("↗")) == "↗"){
-                        Type = CharMappingType.Unicode;
-                    } else if (Writer.Encoding.GetString(Writer.Encoding.GetBytes("／")) == "／")
-                    {
-                        Type = CharMappingType.ANSI;
-                    } else {
-                        Type = CharMappingType.ASCII;
-                    }
-                    MappingType.TryAdd(Writer.Encoding, Type);
-                }
+                Options = (Options ?? new OutputOptions()).AutoMapping(Writer.Encoding);
                 var Lines = (Chunk.Header.Type, Chunk.Body) switch
                 {
                     (ChunkType.EndOfFile, _) => Enumerable.Empty<string>(),
                     (ChunkType.Tempo_TFPS_Config, TempoTFPSConfigBody Body) => Tempo_TFPS_ConfigToFormatEnumerable(Chunk.Header, Body),
                     (ChunkType.Bigin_Finish_Config, BiginFinishConfigBody Body) => Bigin_Finish_ConfigToFormatEnumerable(Chunk.Header, Body),
-                    (ChunkType.StepData, StepDataBody Body) => StepDataToFormatEnumerable(Chunk.Header, Body, Type),
+                    (ChunkType.StepData, StepDataBody Body) => StepDataToFormatEnumerable(Chunk.Header, Body, Options),
                     _ => Enumerable.Empty<string>(),
                 };
                 foreach (var Line in Lines)
@@ -111,7 +96,7 @@ namespace Ddr.Ssq.Printing
         /// <param name="Header"></param>
         /// <param name="Body"></param>
         /// <returns></returns>
-        public static IEnumerable<string> Tempo_TFPS_ConfigToFormatEnumerable(ChunkHeader Header, TempoTFPSConfigBody Body)
+        internal static IEnumerable<string> Tempo_TFPS_ConfigToFormatEnumerable(ChunkHeader Header, TempoTFPSConfigBody Body)
         {
             const ChunkType BASE_TYPE = ChunkType.Tempo_TFPS_Config;
             if (Header.Type is not BASE_TYPE)
@@ -139,7 +124,7 @@ namespace Ddr.Ssq.Printing
         /// <param name="Header"></param>
         /// <param name="Body"></param>
         /// <returns></returns>
-        public static IEnumerable<string> Bigin_Finish_ConfigToFormatEnumerable(ChunkHeader Header, BiginFinishConfigBody Body)
+        internal static IEnumerable<string> Bigin_Finish_ConfigToFormatEnumerable(ChunkHeader Header, BiginFinishConfigBody Body)
         {
             const ChunkType BASE_TYPE = ChunkType.Bigin_Finish_Config;
             if (Header.Type is not BASE_TYPE)
@@ -162,40 +147,25 @@ namespace Ddr.Ssq.Printing
         /// <param name="Body"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static IEnumerable<string> StepDataToFormatEnumerable(ChunkHeader Header, StepDataBody Body, CharMappingType type = default)
+        internal static IEnumerable<string> StepDataToFormatEnumerable(ChunkHeader Header, StepDataBody Body, OutputOptions Options)
         {
             const ChunkType BASE_TYPE = ChunkType.StepData;
+            Debug.Assert(Options.MappingType is not CharMappingType.Auto);
             if (Header.Type is not BASE_TYPE)
                 throw new ArgumentException($"{nameof(Header)} type is not {BASE_TYPE}({(short)BASE_TYPE:X}). {nameof(Header.Type)} : {Header.Type}({(short)Header.Type:X})", nameof(Header));
-            string LeftArrow;
-            string RightArrow;
-            string UpArrow;
-            string DownArrow;
-            string NorthEastArrow;
-            string NorthWestArrow;
-            string ShockArrow;
-            switch (type) {
-                default:
-                case CharMappingType.Unicode:
-                    LeftArrow = "←";
-                    RightArrow = "→";
-                    UpArrow = "↑";
-                    DownArrow = "↓";
-                    NorthEastArrow = "↗";
-                    NorthWestArrow = "↖";
-                    ShockArrow = "◆";
-                break;
-                case CharMappingType.ASCII:
-                case CharMappingType.ANSI:
-                    LeftArrow = "←";
-                    RightArrow = "→";
-                    UpArrow = "↑";
-                    DownArrow = "↓";
-                    NorthEastArrow = "／";
-                    NorthWestArrow = "＼";
-                    ShockArrow = "◆";
-                break;
-            }
+            var EA = Options.EmptyArrow;
+            var NA = Options.NoArrow;
+            var LeftArrow = Options.LeftArrow;
+            var RightArrow = Options.RightArrow;
+            var UpArrow = Options.UpArrow;
+            var DownArrow = Options.DownArrow;
+            var NorthEastArrow = Options.NorthEastArrow;
+            var NorthWestArrow = Options.NorthWestArrow;
+            var ShockArrow = Options.ShockArrow;
+            var ShockArrowWord = Options.ShockArrowWord;
+            var FreezeArrowSign = Options.FreezeArrowSign;
+            var FreezeArrowWord = Options.FreezeArrowWord;
+            var FreezeArrowCharactor = Options.FreezeArrowCharactor;
             var lastStep = new Queue<byte>();
             var lastCount = 0;
 
@@ -207,15 +177,15 @@ namespace Ddr.Ssq.Printing
                 var Step = Header.PlayStyle switch
                 {
                     PlayStyle.Single
-                        => new[] { "　", "…", "…", "…", "…", "　", "　", "　", "　", "　", "　", "　", ":  " },
+                        => new[] { NA, EA, EA, EA, EA, NA, NA, NA, NA, NA, NA, NA, ":  " },
                     PlayStyle.Solo
-                        => new[] { "…", "…", "…", "…", "…", "…", "　", "　", "　", "　", "　", "　", ":  " },
+                        => new[] { EA, EA, EA, EA, EA, EA, NA, NA, NA, NA, NA, NA, ":  " },
                     PlayStyle.Double
-                        => new[] { "　", "…", "…", "…", "…", "　", "　", "…", "…", "…", "…", "　", ":  " },
+                        => new[] { NA, EA, EA, EA, EA, NA, NA, EA, EA, EA, EA, NA, ":  " },
                     PlayStyle.Battle
-                        => new[] { "　", "…", "…", "…", "…", "　", "　", "…", "…", "…", "…", "　", ":  " },
+                        => new[] { NA, EA, EA, EA, EA, NA, NA, EA, EA, EA, EA, NA, ":  " },
                     _
-                        => new[] { "　", "　", "　", "　", "　", "　", "　", "　", "　", "　", "　", "　", ":  " },
+                        => new[] { NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ":  " },
                 };
                 var _step = Body.Values[i];
                 Step[12] = $":{_step:X2}";
@@ -223,13 +193,13 @@ namespace Ddr.Ssq.Printing
                 // freeze arrow判定
                 {
                     var l = lastStep.Any() ? lastStep.Dequeue() : 0;
-                    Step[l] = "＃";
+                    Step[l] = FreezeArrowSign;
                     var p = l switch
                     {
                         7 or 8 or 9 or 10 => 6,
                         1 or 2 or 3 or 4 or _ => 5,
                     };
-                    Step[p] = $"L{(lastCount - lastStep.Count)}";
+                    Step[p] = $"{FreezeArrowCharactor}{(lastCount - lastStep.Count)}";
                 }
                 else
                 // nomal arrow or shock arrow
@@ -247,12 +217,12 @@ namespace Ddr.Ssq.Printing
                         if ((s & Player1Up) > 0) { Step[3] = UpArrow; lastStep.Enqueue(3); lastCount++; }
                         if ((s & Player1Right) > 0) { Step[4] = RightArrow; lastStep.Enqueue(4); lastCount++; }
                         if ((s & Player1Special) == Player1Special) // Shock Arrow
-                        { Step[1] = ShockArrow; Step[2] = ShockArrow; Step[3] = ShockArrow; Step[4] = ShockArrow; Step[5] = ShockArrow; }
+                        { Step[1] = Step[2] = Step[3] = Step[4] = ShockArrow; Step[5] = ShockArrowWord; }
 
                         if (i < Header.Entry - 1)
                         {
                             if ((s & Player1Special) > 0 && Body.Values[i + 1] == 0x0) // freeze arrow 
-                            { Step[5] = "長"; }
+                            { Step[5] = FreezeArrowWord; }
                         }
                     }
                     if (Header.PlayStyle
@@ -278,12 +248,12 @@ namespace Ddr.Ssq.Printing
                         if ((s & Player2Right) > 0) { Step[10] = RightArrow; lastStep.Enqueue(10); lastCount++; }
 
                         if ((s & Player2Special) == Player2Special) //Shock Arrow
-                        { Step[7] = ShockArrow; Step[8] = ShockArrow; Step[9] = ShockArrow; Step[10] = ShockArrow; Step[6] = "衝"; }
+                        { Step[7] = Step[8] = Step[9] = Step[10] = ShockArrow; Step[6] = ShockArrowWord; }
 
                         if (i < Header.Entry - 1)
                         {
                             if ((s & Player2Special) > 0 && Body.Values[i + 1] == 0x0) // freeze arrow 
-                            { Step[6] = "長"; }
+                            { Step[6] = FreezeArrowWord; }
                         }
                     }
                 }
