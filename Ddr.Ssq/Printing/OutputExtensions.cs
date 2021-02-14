@@ -88,12 +88,12 @@ namespace Ddr.Ssq.Printing
                     }
                     MappingType.TryAdd(Writer.Encoding, Type);
                 }
-                var Lines = Chunk.Header.Type switch
+                var Lines = (Chunk.Header.Type, Chunk.Body) switch
                 {
-                    ChunkType.EndOfFile => Enumerable.Empty<string>(),
-                    ChunkType.Tempo_TFPS_Config => Tempo_TFPS_ConfigToFormatEnumerable(Chunk),
-                    ChunkType.Bigin_Finish_Config => Bigin_Finish_ConfigToFormatEnumerable(Chunk),
-                    ChunkType.StepData => StepDataToFormatEnumerable(Chunk, Type),
+                    (ChunkType.EndOfFile, _) => Enumerable.Empty<string>(),
+                    (ChunkType.Tempo_TFPS_Config, TempoTFPSConfigBody Body) => Tempo_TFPS_ConfigToFormatEnumerable(Chunk.Header, Body),
+                    (ChunkType.Bigin_Finish_Config, BiginFinishConfigBody Body) => Bigin_Finish_ConfigToFormatEnumerable(Chunk.Header, Body),
+                    (ChunkType.StepData, StepDataBody Body) => StepDataToFormatEnumerable(Chunk.Header, Body, Type),
                     _ => Enumerable.Empty<string>(),
                 };
                 foreach (var Line in Lines)
@@ -108,23 +108,24 @@ namespace Ddr.Ssq.Printing
         /// <summary>
         /// output <see cref="ChunkType.Tempo_TFPS_Config"/> body information.
         /// </summary>
-        /// <param name="Chunk"></param>
+        /// <param name="Header"></param>
+        /// <param name="Body"></param>
         /// <returns></returns>
-        public static IEnumerable<string> Tempo_TFPS_ConfigToFormatEnumerable(Chunk Chunk)
+        public static IEnumerable<string> Tempo_TFPS_ConfigToFormatEnumerable(ChunkHeader Header, TempoTFPSConfigBody Body)
         {
             const ChunkType BASE_TYPE = ChunkType.Tempo_TFPS_Config;
-            if (Chunk.Header.Type is not BASE_TYPE)
-                throw new ArgumentException($"{nameof(Chunk)} type is not {BASE_TYPE}({(short)BASE_TYPE:X}). {nameof(Chunk.Header.Type)} : {Chunk.Header.Type}({(short)Chunk.Header.Type:X})", nameof(Chunk));
+            if (Header.Type is not BASE_TYPE)
+                throw new ArgumentException($"{nameof(Header)} type is not {BASE_TYPE}({(short)BASE_TYPE:X}). {nameof(Header.Type)} : {Header.Type}({(short)Header.Type:X})", nameof(Header));
 
-            for (var i = 0; i < Chunk.Header.Entry; i++)
+            for (var i = 0; i < Header.Entry; i++)
             {
                 if (i is 0) continue;
-                var TimeOffset = Chunk.TimeOffsets[i];
-                var LastTimeOffset = Chunk.TimeOffsets[i - 1];
+                var TimeOffset = Body.TimeOffsets[i];
+                var LastTimeOffset = Body.TimeOffsets[i - 1];
                 var DeltaOffset = TimeOffset - LastTimeOffset;
-                var DeltaTicks = Chunk.Tempo_TFPS_Config[i] - Chunk.Tempo_TFPS_Config[i - 1];
+                var DeltaTicks = Body.Values[i] - Body.Values[i - 1];
 
-                var TfPS = Chunk.Header.Param;
+                var TfPS = Header.Param;
                 var MeasureLength = 4096;
 
                 var bpm = (DeltaOffset / (double)MeasureLength) / ((DeltaTicks / (double)TfPS) / 240);
@@ -135,34 +136,37 @@ namespace Ddr.Ssq.Printing
         /// <summary>
         /// output <see cref="ChunkType.Bigin_Finish_Config"/> body information.
         /// </summary>
-        /// <param name="Chunk"></param>
+        /// <param name="Header"></param>
+        /// <param name="Body"></param>
         /// <returns></returns>
-        public static IEnumerable<string> Bigin_Finish_ConfigToFormatEnumerable(Chunk Chunk)
+        public static IEnumerable<string> Bigin_Finish_ConfigToFormatEnumerable(ChunkHeader Header, BiginFinishConfigBody Body)
         {
             const ChunkType BASE_TYPE = ChunkType.Bigin_Finish_Config;
-            if (Chunk.Header.Type is not BASE_TYPE)
-                throw new ArgumentException($"{nameof(Chunk)} type is not {BASE_TYPE}({(short)BASE_TYPE:X}). {nameof(Chunk.Header.Type)} : {Chunk.Header.Type}({(short)Chunk.Header.Type:X})", nameof(Chunk));
+            if (Header.Type is not BASE_TYPE)
+                throw new ArgumentException($"{nameof(Header)} type is not {BASE_TYPE}({(short)BASE_TYPE:X}). {nameof(Chunk.Header.Type)} : {Header.Type}({(short)Header.Type:X})", nameof(Header));
 
-            for (var i = 0; i < Chunk.Header.Entry; i++)
+            for (var i = 0; i < Header.Entry; i++)
             {
-                var TimeOffset = Chunk.TimeOffsets[i];
-                var LastTimeOffset = i is 0 ? 0 : Chunk.TimeOffsets[i - 1];
+                var TimeOffset = Body.TimeOffsets[i];
+                var LastTimeOffset = i is 0 ? 0 : Body.TimeOffsets[i - 1];
 
                 var DeltaOffset = i is 0 ? 0 : TimeOffset - LastTimeOffset;
-                var ConfigType = Chunk.Bigin_Finish_Config[i];
-                yield return $"[02:BFC][({TimeOffset,6:X}) {TimeOffset,8}][func.{(short)ConfigType,4:X}: {Chunk.Bigin_Finish_Config[i].ToMemberName(),-18} ] Delta> Offset:({DeltaOffset,6:X}){DeltaOffset,7} ";
+                var ConfigType = Body.Values[i];
+                yield return $"[02:BFC][({TimeOffset,6:X}) {TimeOffset,8}][func.{(short)ConfigType,4:X}: {Body.Values[i].ToMemberName(),-18} ] Delta> Offset:({DeltaOffset,6:X}){DeltaOffset,7} ";
             }
         }
         /// <summary>
         /// output <see cref="ChunkType.StepData"/> body information.
         /// </summary>
-        /// <param name="Chunk"></param>
+        /// <param name="Header"></param>
+        /// <param name="Body"></param>
+        /// <param name="type"></param>
         /// <returns></returns>
-        public static IEnumerable<string> StepDataToFormatEnumerable(Chunk Chunk, CharMappingType type = default)
+        public static IEnumerable<string> StepDataToFormatEnumerable(ChunkHeader Header, StepDataBody Body, CharMappingType type = default)
         {
             const ChunkType BASE_TYPE = ChunkType.StepData;
-            if (Chunk.Header.Type is not BASE_TYPE)
-                throw new ArgumentException($"{nameof(Chunk)} type is not {BASE_TYPE}({(short)BASE_TYPE:X}). {nameof(Chunk.Header.Type)} : {Chunk.Header.Type}({(short)Chunk.Header.Type:X})", nameof(Chunk));
+            if (Header.Type is not BASE_TYPE)
+                throw new ArgumentException($"{nameof(Header)} type is not {BASE_TYPE}({(short)BASE_TYPE:X}). {nameof(Header.Type)} : {Header.Type}({(short)Header.Type:X})", nameof(Header));
             string LeftArrow;
             string RightArrow;
             string UpArrow;
@@ -195,12 +199,12 @@ namespace Ddr.Ssq.Printing
             var lastStep = new Queue<byte>();
             var lastCount = 0;
 
-            for (var i = 0; i < Chunk.Header.Entry; i++)
+            for (var i = 0; i < Header.Entry; i++)
             {
-                var TimeOffset = Chunk.TimeOffsets[i];
-                var LastTimeOffset = i is 0 ? 0 : Chunk.TimeOffsets[i - 1];
+                var TimeOffset = Body.TimeOffsets[i];
+                var LastTimeOffset = i is 0 ? 0 : Body.TimeOffsets[i - 1];
                 var DeltaOffset = i is 0 ? 0 : TimeOffset - LastTimeOffset;
-                var Step = Chunk.Header.PlayStyle switch
+                var Step = Header.PlayStyle switch
                 {
                     PlayStyle.Single
                         => new[] { "　", "…", "…", "…", "…", "　", "　", "　", "　", "　", "　", "　", ":  " },
@@ -213,7 +217,7 @@ namespace Ddr.Ssq.Printing
                     _
                         => new[] { "　", "　", "　", "　", "　", "　", "　", "　", "　", "　", "　", "　", ":  " },
                 };
-                var _step = Chunk.StepData[i];
+                var _step = Body.Values[i];
                 Step[12] = $":{_step:X2}";
                 if (_step is 0)
                 // freeze arrow判定
@@ -232,7 +236,7 @@ namespace Ddr.Ssq.Printing
                 {
                     lastStep.Clear();
                     lastCount = 0;
-                    if (Chunk.Header.PlayStyle
+                    if (Header.PlayStyle
                         is PlayStyle.Single
                         or PlayStyle.Double
                         or PlayStyle.Battle) //solo以外
@@ -245,13 +249,13 @@ namespace Ddr.Ssq.Printing
                         if ((s & Player1Special) == Player1Special) // Shock Arrow
                         { Step[1] = ShockArrow; Step[2] = ShockArrow; Step[3] = ShockArrow; Step[4] = ShockArrow; Step[5] = ShockArrow; }
 
-                        if (i < Chunk.Header.Entry - 1)
+                        if (i < Header.Entry - 1)
                         {
-                            if ((s & Player1Special) > 0 && Chunk.StepData[i + 1] == 0x0) // freeze arrow 
+                            if ((s & Player1Special) > 0 && Body.Values[i + 1] == 0x0) // freeze arrow 
                             { Step[5] = "長"; }
                         }
                     }
-                    if (Chunk.Header.PlayStyle
+                    if (Header.PlayStyle
                         is PlayStyle.Solo)
                     {
                         var s = (SoloStepType)_step;
@@ -263,7 +267,7 @@ namespace Ddr.Ssq.Printing
                         if ((s & SoloPlayerRight) > 0) { Step[5] = RightArrow; }
                     }
 
-                    if (Chunk.Header.PlayStyle
+                    if (Header.PlayStyle
                         is PlayStyle.Double
                         or PlayStyle.Battle)
                     {
@@ -276,9 +280,9 @@ namespace Ddr.Ssq.Printing
                         if ((s & Player2Special) == Player2Special) //Shock Arrow
                         { Step[7] = ShockArrow; Step[8] = ShockArrow; Step[9] = ShockArrow; Step[10] = ShockArrow; Step[6] = "衝"; }
 
-                        if (i < Chunk.Header.Entry - 1)
+                        if (i < Header.Entry - 1)
                         {
-                            if ((s & Player2Special) > 0 && Chunk.StepData[i + 1] == 0x0) // freeze arrow 
+                            if ((s & Player2Special) > 0 && Body.Values[i + 1] == 0x0) // freeze arrow 
                             { Step[6] = "長"; }
                         }
                     }
