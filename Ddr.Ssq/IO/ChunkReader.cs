@@ -104,8 +104,8 @@ namespace Ddr.Ssq.IO
             Logger.LogDebug("usable body size Length:{Length} - HeaderSize:{HeaderSize} -> {Size}", Length, Size, Length - Size);
             IBody Body = Header.Type switch
             {
-                ChunkType.Tempo_TFPS_Config => new TempoTFPSConfigBody(),
-                ChunkType.Bigin_Finish_Config => new BiginFinishConfigBody(),
+                ChunkType.TempoTFPSConfig => new TempoTFPSConfigBody(),
+                ChunkType.BiginFinishConfig => new BiginFinishConfigBody(),
                 ChunkType.StepData => new StepDataBody(),
                 _ => new OtherBody(),
             };
@@ -182,7 +182,7 @@ namespace Ddr.Ssq.IO
             }
             if (Size == Length)
                 return Body;
-            if (Header.Type is ChunkType.Tempo_TFPS_Config or ChunkType.Bigin_Finish_Config or ChunkType.StepData)
+            if (Header.Type is ChunkType.TempoTFPSConfig or ChunkType.BiginFinishConfig or ChunkType.StepData)
                 Logger.LogWarning("{ChunkType} has OtherData", Header.Type);
             if (Body is IOtherDataBody OtherDataBody)
             {

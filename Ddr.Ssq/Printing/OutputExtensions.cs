@@ -32,9 +32,9 @@ namespace Ddr.Ssq.Printing
                     Builder.Append($"[{(short)Chunk.Header.Type:X2}:{Chunk.Header.Type.ToMemberName(),-20}]");
                     Builder.Append(Chunk.Header.Type switch
                     {
-                        ChunkType.Tempo_TFPS_Config
+                        ChunkType.TempoTFPSConfig
                             => $"[TfPS  : ({Chunk.Header.Param,4:X}) {Chunk.Header.Param,4}] {string.Empty,14}",
-                        ChunkType.Bigin_Finish_Config
+                        ChunkType.BiginFinishConfig
                             => $"[param : ({Chunk.Header.Param,4:X}) {Chunk.Header.Param,4}] {string.Empty,14}",
                         ChunkType.StepData
                             => $"[level : ({Chunk.Header.Param,4:X4}) {Chunk.Header.PlayStyle.ToMemberName(),-8} {Chunk.Header.PlayDifficulty.ToMemberName(),-10}]",
@@ -76,8 +76,8 @@ namespace Ddr.Ssq.Printing
                 var Lines = (Chunk.Header.Type, Chunk.Body) switch
                 {
                     (ChunkType.EndOfFile, _) => Enumerable.Empty<string>(),
-                    (ChunkType.Tempo_TFPS_Config, TempoTFPSConfigBody Body) => Tempo_TFPS_ConfigToFormatEnumerable(Chunk.Header, Body),
-                    (ChunkType.Bigin_Finish_Config, BiginFinishConfigBody Body) => Bigin_Finish_ConfigToFormatEnumerable(Chunk.Header, Body),
+                    (ChunkType.TempoTFPSConfig, TempoTFPSConfigBody Body) => Tempo_TFPS_ConfigToFormatEnumerable(Chunk.Header, Body),
+                    (ChunkType.BiginFinishConfig, BiginFinishConfigBody Body) => Bigin_Finish_ConfigToFormatEnumerable(Chunk.Header, Body),
                     (ChunkType.StepData, StepDataBody Body) => StepDataToFormatEnumerable(Chunk.Header, Body, Options),
                     _ => Enumerable.Empty<string>(),
                 };
@@ -91,14 +91,14 @@ namespace Ddr.Ssq.Printing
             }
         }
         /// <summary>
-        /// output <see cref="ChunkType.Tempo_TFPS_Config"/> body information.
+        /// output <see cref="ChunkType.TempoTFPSConfig"/> body information.
         /// </summary>
         /// <param name="Header"></param>
         /// <param name="Body"></param>
         /// <returns></returns>
         internal static IEnumerable<string> Tempo_TFPS_ConfigToFormatEnumerable(ChunkHeader Header, TempoTFPSConfigBody Body)
         {
-            const ChunkType BASE_TYPE = ChunkType.Tempo_TFPS_Config;
+            const ChunkType BASE_TYPE = ChunkType.TempoTFPSConfig;
             if (Header.Type is not BASE_TYPE)
                 throw new ArgumentException($"{nameof(Header)} type is not {BASE_TYPE}({(short)BASE_TYPE:X}). {nameof(Header.Type)} : {Header.Type}({(short)Header.Type:X})", nameof(Header));
 
@@ -119,14 +119,14 @@ namespace Ddr.Ssq.Printing
             }
         }
         /// <summary>
-        /// output <see cref="ChunkType.Bigin_Finish_Config"/> body information.
+        /// output <see cref="ChunkType.BiginFinishConfig"/> body information.
         /// </summary>
         /// <param name="Header"></param>
         /// <param name="Body"></param>
         /// <returns></returns>
         internal static IEnumerable<string> Bigin_Finish_ConfigToFormatEnumerable(ChunkHeader Header, BiginFinishConfigBody Body)
         {
-            const ChunkType BASE_TYPE = ChunkType.Bigin_Finish_Config;
+            const ChunkType BASE_TYPE = ChunkType.BiginFinishConfig;
             if (Header.Type is not BASE_TYPE)
                 throw new ArgumentException($"{nameof(Header)} type is not {BASE_TYPE}({(short)BASE_TYPE:X}). {nameof(Chunk.Header.Type)} : {Header.Type}({(short)Header.Type:X})", nameof(Header));
 
