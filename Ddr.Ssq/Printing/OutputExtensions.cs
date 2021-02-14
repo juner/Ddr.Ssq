@@ -150,7 +150,7 @@ namespace Ddr.Ssq.Printing
                 var TimeOffset = Body.TimeOffsets[i];
                 var LastTimeOffset = i is 0 ? 0 : Body.TimeOffsets[i - 1];
 
-                var DeltaOffset = i is 0 ? 0 : TimeOffset - LastTimeOffset;
+                var DeltaOffset = TimeOffset - LastTimeOffset;
                 var ConfigType = Body.Values[i];
                 yield return $"[02:BFC][({TimeOffset,6:X}) {TimeOffset,8}][func.{(short)ConfigType,4:X}: {Body.Values[i].ToMemberName(),-18} ] Delta> Offset:({DeltaOffset,6:X}){DeltaOffset,7} ";
             }
@@ -203,7 +203,7 @@ namespace Ddr.Ssq.Printing
             {
                 var TimeOffset = Body.TimeOffsets[i];
                 var LastTimeOffset = i is 0 ? 0 : Body.TimeOffsets[i - 1];
-                var DeltaOffset = i is 0 ? 0 : TimeOffset - LastTimeOffset;
+                var DeltaOffset = TimeOffset - LastTimeOffset;
                 var Step = Header.PlayStyle switch
                 {
                     PlayStyle.Single
