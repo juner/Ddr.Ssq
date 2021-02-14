@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -43,10 +42,15 @@ namespace Ddr.Ssq.IO
         }
         public Chunk ReadChunk()
         {
-            var Chunk = new Chunk();
-            ReadHeader(Chunk);
-            ReadBody(Chunk, Chunk.Header);
-            return Chunk;
+            var Offset = Stream.Position;
+            var Header = ReadHeader();
+            var Body = ReadBody(Header);
+            return new Chunk
+            {
+                Offset = Offset,
+                Header = Header,
+                Body = Body,
+            };
         }
         static int headerSize;
         static int HeaderSize
@@ -90,53 +94,41 @@ namespace Ddr.Ssq.IO
             foreach (ref byte s in span)
                 s = 0;
         }
-        public void ReadHeader(Chunk Chunk)
-        {
-            var Offset = Stream.Position;
-            var Header = ReadHeader();
-            Chunk.Offset = Offset;
-            Chunk.Header = Header;
-        }
-        public void ReadBody(Chunk Chunk, in ChunkHeader Header)
+        public IBody ReadBody(in ChunkHeader Header)
         {
             if (Header is { Type: ChunkType.EndOfFile } or { Length: 0 } or { Entry: 0 })
-                return;
+                return new EmptyBody();
             var Entry = Header.Entry;
             var Length = Header.Length;
             var Size = Marshal.SizeOf<ChunkHeader>();
             Logger.LogDebug("usable body size Length:{Length} - HeaderSize:{HeaderSize} -> {Size}", Length, Size, Length - Size);
-            //timeOffsetのリストを生成
-            switch (Header.Type)
+            IBody Body = Header.Type switch
             {
-                //case ChunkType.EndOfFile:
-                //    return;
-                default:
-                case ChunkType.Tempo_TFPS_Config:
-                case ChunkType.Bigin_Finish_Config:
-                case ChunkType.StepData:
-                    {
-                        var UseSize = Entry * sizeof(uint);
-                        var _Size = Size;
-                        Size += UseSize;
-                        Logger.LogDebug("{_Size} + {Entry} * {uint} -> {Size} Length:{Length}", _Size, Entry, sizeof(uint), Size, Length);
-                        Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
-                        using var buffer = Pool.Rent(UseSize);
-                        var Span = buffer.Memory.Span[..UseSize];
-                        var readed = Stream.Read(Span);
-                        Logger.LogReaded(Stream, readed, Span[..readed]);
-                        Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
+                ChunkType.Tempo_TFPS_Config => new TempoTFPSConfigBody(),
+                ChunkType.Bigin_Finish_Config => new BiginFinishConfigBody(),
+                ChunkType.StepData => new StepDataBody(),
+                _ => new OtherBody(),
+            };
+            if (Body is ITimeOffsetBody TimeOffsetBody)
+            {
+                var UseSize = Entry * sizeof(uint);
+                var _Size = Size;
+                Size += UseSize;
+                Logger.LogDebug("{_Size} + {Entry} * {uint} -> {Size} Length:{Length}", _Size, Entry, sizeof(uint), Size, Length);
+                Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
+                using var buffer = Pool.Rent(UseSize);
+                var Span = buffer.Memory.Span[..UseSize];
+                var readed = Stream.Read(Span);
+                Logger.LogReaded(Stream, readed, Span[..readed]);
+                Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
 
-                        var TimeOffsets = MemoryMarshal.Cast<byte, int>(Span).ToArray();
-                        Chunk.TimeOffsets = TimeOffsets;
-                        Logger.LogResult(nameof(Chunk.TimeOffsets), TimeOffsets);
-                    }
-                    break;
+                var TimeOffsets = MemoryMarshal.Cast<byte, int>(Span).ToArray();
+                TimeOffsetBody.TimeOffsets = TimeOffsets;
+                Logger.LogResult(nameof(TimeOffsetBody.TimeOffsets), TimeOffsets);
             }
-            switch (Header.Type)
+            switch (Body)
             {
-                //case ChunkType.EndOfFile:
-                //    return;
-                case ChunkType.Tempo_TFPS_Config:
+                case TempoTFPSConfigBody TempoTFPSConfigBody:
                     {
                         var _Size = Size;
                         var UseSize = Entry * sizeof(int);
@@ -149,11 +141,11 @@ namespace Ddr.Ssq.IO
                         Logger.LogReaded(Stream, readed, Span[..readed]);
                         Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
                         var Tempo_TFPS_Config = MemoryMarshal.Cast<byte, int>(Span).ToArray();
-                        Chunk.Tempo_TFPS_Config = Tempo_TFPS_Config;
-                        Logger.LogResult(nameof(Chunk.Tempo_TFPS_Config), Tempo_TFPS_Config);
+                        TempoTFPSConfigBody.Values = Tempo_TFPS_Config;
+                        Logger.LogResult(nameof(TempoTFPSConfigBody.Values), Tempo_TFPS_Config);
                     }
                     break;
-                case ChunkType.Bigin_Finish_Config:
+                case BiginFinishConfigBody BiginFinishConfigBody:
                     {
                         var _Size = Size;
                         var UseSize = Entry * sizeof(short);
@@ -165,12 +157,12 @@ namespace Ddr.Ssq.IO
                         var readed = Stream.Read(Span);
                         Logger.LogReaded(Stream, readed, Span[..readed]);
                         Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
-                        var Bigin_Finish_Config = MemoryMarshal.Cast<byte, BiginFinishConfigType>(Span).ToArray();
-                        Chunk.Bigin_Finish_Config = Bigin_Finish_Config;
-                        Logger.LogResult(nameof(Chunk.Bigin_Finish_Config), Bigin_Finish_Config.Cast<short>());
+                        var BiginFinishConfig = MemoryMarshal.Cast<byte, BiginFinishConfigType>(Span).ToArray();
+                        BiginFinishConfigBody.Values = BiginFinishConfig;
+                        Logger.LogResult(nameof(BiginFinishConfigBody.Values), BiginFinishConfig.Cast<short>());
                     }
                     break;
-                case ChunkType.StepData:
+                case StepDataBody StepDataBody:
                     {
                         var _Size = Size;
                         var UseSize = Entry * sizeof(byte);
@@ -183,12 +175,16 @@ namespace Ddr.Ssq.IO
                         Logger.LogReaded(Stream, readed, Span[..readed]);
                         Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
                         var StepData = Span.ToArray();
-                        Chunk.StepData = StepData;
-                        Logger.LogResult(nameof(Chunk.StepData), StepData);
+                        StepDataBody.Values = StepData;
+                        Logger.LogResult(nameof(StepDataBody.Values), StepData);
                     }
                     break;
             }
-            if (Size < Length)
+            if (Size == Length)
+                return Body;
+            if (Header.Type is ChunkType.Tempo_TFPS_Config or ChunkType.Bigin_Finish_Config or ChunkType.StepData)
+                Logger.LogWarning("{ChunkType} has OtherData", Header.Type);
+            if (Body is IOtherDataBody OtherDataBody)
             {
                 var _Size = Size;
                 var UseSize = Length - _Size;
@@ -200,10 +196,11 @@ namespace Ddr.Ssq.IO
                 Logger.LogReaded(Stream, readed, Span[..readed]);
                 Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
                 var OtherData = Span.ToArray();
-                Chunk.OtherData = OtherData;
-                Logger.LogResult(nameof(Chunk.OtherData), OtherData);
+                OtherDataBody.OtherData = OtherData;
+                Logger.LogResult(nameof(IOtherDataBody.OtherData), OtherData);
             }
             Debug.Assert(Size == Length, $"has no read byte. Size:{Size} Length:{Length}");
+            return Body;
         }
         public void Dispose()
         {
