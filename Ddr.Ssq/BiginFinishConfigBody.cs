@@ -10,13 +10,13 @@ namespace Ddr.Ssq
         public BiginFinishConfigType[] Values { get; set; } = Array.Empty<BiginFinishConfigType>();
         byte[] IOtherDataBody.OtherData { get; set; } = Array.Empty<byte>();
         public LinkedList<BiginFinishConfigEntry> GetEntries()
-            => new LinkedList<BiginFinishConfigEntry>(TimeOffsets.Zip(Values).Select(v => new BiginFinishConfigEntry(v.First, v.Second)));
+            => new(TimeOffsets.Zip(Values).Select(v => new BiginFinishConfigEntry(v.First, v.Second)));
         public void SetEntries(LinkedList<BiginFinishConfigEntry> Entries)
         {
             var TimeOffsets = new int[Entries.Count];
             var Values = new BiginFinishConfigType[Entries.Count];
             var i = 0;
-            foreach(var e in Entries)
+            foreach (var e in Entries)
             {
                 var index = i++;
                 TimeOffsets[index] = e.TimeOffset;

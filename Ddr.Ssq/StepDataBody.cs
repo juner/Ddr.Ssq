@@ -10,7 +10,7 @@ namespace Ddr.Ssq
         public byte[] Values { get; set; } = Array.Empty<byte>();
         public byte[] OtherData { get; set; } = Array.Empty<byte>();
         public LinkedList<StepDataEntry> GetEntries()
-            => new LinkedList<StepDataEntry>(TimeOffsets.Zip(Values).Select(v => new StepDataEntry(v.First, v.Second)));
+            => new(TimeOffsets.Zip(Values).Select(v => new StepDataEntry(v.First, v.Second)));
         public void SetEntries(LinkedList<StepDataEntry> Entries)
         {
             var TimeOffsets = new int[Entries.Count];

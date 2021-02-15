@@ -15,7 +15,7 @@ namespace Ddr.Ssq
         public short Param;
         public int Entry;
         public ChunkHeader(int Length = 0, ChunkType Type = ChunkType.EndOfFile, short Param = 0, int Entry = 0)
-            => (this.Length, this.Type, this.Param, this.Entry) 
+            => (this.Length, this.Type, this.Param, this.Entry)
             = (Length, Type, Param, Entry);
         public PlayDifficulty PlayDifficulty
         {

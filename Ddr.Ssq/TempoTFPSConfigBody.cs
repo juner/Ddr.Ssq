@@ -10,7 +10,7 @@ namespace Ddr.Ssq
         public int[] Values { get; set; } = Array.Empty<int>();
         byte[] IOtherDataBody.OtherData { get; set; } = Array.Empty<byte>();
         public LinkedList<TempoTFPSConfigEntry> GetEntries()
-            => new LinkedList<TempoTFPSConfigEntry>(TimeOffsets.Zip(Values).Select(v => new TempoTFPSConfigEntry(v.First, v.Second)));
+            => new(TimeOffsets.Zip(Values).Select(v => new TempoTFPSConfigEntry(v.First, v.Second)));
         public void SetEntries(LinkedList<TempoTFPSConfigEntry> Entries)
         {
             var TimeOffsets = new int[Entries.Count];

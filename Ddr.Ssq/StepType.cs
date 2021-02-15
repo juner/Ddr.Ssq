@@ -127,13 +127,13 @@ namespace Ddr.Ssq
     }
     public enum StepArrows : byte
     {
-        [EnumMember(Value ="←")]
-        Left  = 0b_0001_0001,
+        [EnumMember(Value = "←")]
+        Left = 0b_0001_0001,
         [EnumMember(Value = "↓")]
-        Down  = 0b_0010_0010,
-        [EnumMember(Value ="↑")]
-        Up    = 0b_0100_0100,
-        [EnumMember(Value ="→")]
+        Down = 0b_0010_0010,
+        [EnumMember(Value = "↑")]
+        Up = 0b_0100_0100,
+        [EnumMember(Value = "→")]
         Right = 0b_1000_1000,
     }
     public enum StepPlayers : byte
