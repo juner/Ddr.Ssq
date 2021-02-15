@@ -7,9 +7,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Ddr.Ssq.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Ddr.Ssq.Internal;
 namespace Ddr.Ssq.IO
 {
     public class ChunkReader : IDisposable

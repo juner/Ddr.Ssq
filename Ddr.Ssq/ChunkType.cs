@@ -4,7 +4,7 @@ using Ddr.Ssq.Internal;
 
 namespace Ddr.Ssq
 {
-    public enum ChunkType:short
+    public enum ChunkType : short
     {
         [EnumMember(Value = "End of File.")]
         EndOfFile = 0,

@@ -1,14 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using ConsoleAppFramework;
+using Ddr.Ssq.IO;
+using Ddr.Ssq.Printing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Ddr.Ssq.Printing;
-using Ddr.Ssq.IO;
-using System.Text;
 
 namespace Ddr.Ssq.AnalyzeTool
 {

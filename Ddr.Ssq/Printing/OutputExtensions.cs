@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using static Ddr.Ssq.StepType;
 using static Ddr.Ssq.SoloStepType;
-using System.Diagnostics;
+using static Ddr.Ssq.StepType;
 
 namespace Ddr.Ssq.Printing
 {
