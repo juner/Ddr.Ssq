@@ -8,7 +8,7 @@ namespace Ddr.Ssq
     {
         public int[] TimeOffsets { get; set; } = Array.Empty<int>();
         public byte[] Values { get; set; } = Array.Empty<byte>();
-        public byte[] OtherData { get; set; } = Array.Empty<byte>();
+        byte[] IOtherDataBody.Values { get; set; } = Array.Empty<byte>();
         public LinkedList<StepDataEntry> GetEntries()
             => new(TimeOffsets.Zip(Values).Select(v => new StepDataEntry(v.First, v.Second)));
         public void SetEntries(LinkedList<StepDataEntry> Entries)
@@ -25,6 +25,8 @@ namespace Ddr.Ssq
             this.TimeOffsets = TimeOffsets;
             this.Values = Values;
         }
+
+        public int Size() => TimeOffsets.Length * sizeof(int) + Values.Length * sizeof(byte) + ((IOtherDataBody)this).Values.Length * sizeof(byte);
     }
     public class StepDataEntry
     {

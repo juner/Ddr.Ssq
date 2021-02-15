@@ -8,7 +8,7 @@ namespace Ddr.Ssq
     {
         public int[] TimeOffsets { get; set; } = Array.Empty<int>();
         public BiginFinishConfigType[] Values { get; set; } = Array.Empty<BiginFinishConfigType>();
-        byte[] IOtherDataBody.OtherData { get; set; } = Array.Empty<byte>();
+        byte[] IOtherDataBody.Values { get; set; } = Array.Empty<byte>();
         public LinkedList<BiginFinishConfigEntry> GetEntries()
             => new(TimeOffsets.Zip(Values).Select(v => new BiginFinishConfigEntry(v.First, v.Second)));
         public void SetEntries(LinkedList<BiginFinishConfigEntry> Entries)
@@ -25,6 +25,7 @@ namespace Ddr.Ssq
             this.TimeOffsets = TimeOffsets;
             this.Values = Values;
         }
+        public int Size() => TimeOffsets.Length * sizeof(int) + Values.Length * sizeof(BiginFinishConfigType) + ((IOtherDataBody)this).Values.Length * sizeof(byte);
     }
     public class BiginFinishConfigEntry
     {
