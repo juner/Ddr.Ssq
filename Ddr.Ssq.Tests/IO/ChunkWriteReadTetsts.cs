@@ -22,7 +22,7 @@ namespace Ddr.Ssq.IO.Tests
                     => new object?[] { Header, Body };
             }
         }
-        [TestMethod,DynamicData(nameof(WriteAndReadTestData))]
+        [TestMethod, DynamicData(nameof(WriteAndReadTestData))]
         public void WriteAndReadTest(ChunkHeader Header, IBody Body)
         {
             Chunk Chunk;
@@ -40,12 +40,12 @@ namespace Ddr.Ssq.IO.Tests
             Assert.AreEqual(0, Offset, nameof(Offset));
             Assert.AreEqual(Header, ActualHeaer, nameof(ChunkHeader));
             Assert.IsInstanceOfType(ActualBody, Body.GetType());
-            switch(Header.Type, Body, ActualBody)
+            switch (Header.Type, Body, ActualBody)
             {
                 case (ChunkType.EndOfFile, EmptyBody _, EmptyBody _):
                     break;
                 case (ChunkType.BiginFinishConfig, BiginFinishConfigBody BFCBody, BiginFinishConfigBody ActualBFCBody):
-                    CollectionAssert.AreEqual(BFCBody.TimeOffsets, ActualBFCBody.TimeOffsets, nameof(BiginFinishConfigBody)+"."+nameof(BiginFinishConfigBody.TimeOffsets));
+                    CollectionAssert.AreEqual(BFCBody.TimeOffsets, ActualBFCBody.TimeOffsets, nameof(BiginFinishConfigBody) + "." + nameof(BiginFinishConfigBody.TimeOffsets));
                     CollectionAssert.AreEqual(BFCBody.Values, ActualBFCBody.Values, nameof(BiginFinishConfigBody) + "." + nameof(BiginFinishConfigBody.Values));
                     CollectionAssert.AreEqual(((IOtherDataBody)BFCBody).Values, ((IOtherDataBody)ActualBFCBody).Values, nameof(IOtherDataBody) + "." + nameof(BiginFinishConfigBody.Values));
                     break;
