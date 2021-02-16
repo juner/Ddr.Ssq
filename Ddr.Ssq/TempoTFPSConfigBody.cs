@@ -8,7 +8,7 @@ namespace Ddr.Ssq
     {
         public int[] TimeOffsets { get; set; } = Array.Empty<int>();
         public int[] Values { get; set; } = Array.Empty<int>();
-        byte[] IOtherDataBody.OtherData { get; set; } = Array.Empty<byte>();
+        byte[] IOtherDataBody.Values { get; set; } = Array.Empty<byte>();
         public LinkedList<TempoTFPSConfigEntry> GetEntries()
             => new(TimeOffsets.Zip(Values).Select(v => new TempoTFPSConfigEntry(v.First, v.Second)));
         public void SetEntries(LinkedList<TempoTFPSConfigEntry> Entries)
@@ -25,6 +25,7 @@ namespace Ddr.Ssq
             this.TimeOffsets = TimeOffsets;
             this.Values = Values;
         }
+        public int Size() => TimeOffsets.Length * sizeof(int) + Values.Length * sizeof(int) + ((IOtherDataBody)this).Values.Length * sizeof(byte);
     }
     public class TempoTFPSConfigEntry
     {

@@ -2,6 +2,6 @@
 {
     public interface IOtherDataBody
     {
-        byte[] OtherData { get; set; }
+        byte[] Values { get; set; }
     }
 }

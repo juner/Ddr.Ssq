@@ -196,8 +196,8 @@ namespace Ddr.Ssq.IO
                 Logger.LogReaded(Stream, readed, Span[..readed]);
                 Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
                 var OtherData = Span.ToArray();
-                OtherDataBody.OtherData = OtherData;
-                Logger.LogResult(nameof(IOtherDataBody.OtherData), OtherData);
+                OtherDataBody.Values = OtherData;
+                Logger.LogResult(nameof(IOtherDataBody.Values), OtherData);
             }
             Debug.Assert(Size == Length, $"has no read byte. Size:{Size} Length:{Length}");
             return Body;

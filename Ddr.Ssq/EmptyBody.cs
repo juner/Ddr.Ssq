@@ -2,8 +2,10 @@
 
 namespace Ddr.Ssq
 {
-    public class EmptyBody : IBody
+    public class EmptyBody : IBody, IOtherDataBody
     {
-        public byte[] OtherData { get; set; } = Array.Empty<byte>();
+        byte[] IOtherDataBody.Values { get; set; } = Array.Empty<byte>();
+
+        public int Size() => ((IOtherDataBody)this).Values.Length * sizeof(byte);
     }
 }
