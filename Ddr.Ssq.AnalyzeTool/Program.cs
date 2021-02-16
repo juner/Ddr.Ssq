@@ -39,9 +39,10 @@ namespace Ddr.Ssq.AnalyzeTool
         readonly IHostEnvironment Environment;
         readonly ILogger<Program> Logger;
         readonly ILoggerFactory LoggerFactory;
-        public Program(IHostEnvironment Environment, ILogger<Program> Logger, IConfiguration Configuration, ILoggerFactory LoggerFactory)
+        public Program(IHostEnvironment Environment, ILogger<Program> Logger, IConfiguration Configuration, ILoggerFactory LoggerFactory, [Option(null, "no logo")] bool nologo = false)
         {
-            Console.WriteLine(@"
+            if (!nologo)
+                Console.WriteLine(@"
 ##############################################################
 ### Check DDR SSQ/CSQ Analyze tool (C) pumpCurry 2019-2020 ###
 ##############################################################
@@ -69,37 +70,44 @@ namespace Ddr.Ssq.AnalyzeTool
         /// <param name="FileName"></param>
         /// <returns></returns>
         [Command("read", "reading SSQ/CSQ information.")]
-        public int ReadInfo([Option(0, "view chunk file.")] string FileName)
+        public int ReadInfo([Option(0, "view chunk file.")] string FileName, [Option("o", "output filename.", DefaultValue = null)] string? output = null)
         {
+            var Writer = Console.Out;
             if (!string.IsNullOrEmpty(Environment.ContentRootPath))
                 Directory.SetCurrentDirectory(Environment.ContentRootPath);
-            var FullPath = Path.IsPathRooted(FileName) ? FileName : Path.GetFullPath(FileName, Environment.ContentRootPath);
-            if (!File.Exists(FullPath))
-            {
-                Console.WriteLine($"file not found: {FullPath}");
-                return 9;
-            }
-            var FileInfo = new FileInfo(FullPath);
-            using var Stream = FileInfo.Open(FileMode.Open, FileAccess.Read);
-            using var Reader = new ChunkReader(Stream, true)
-            {
-                Logger = LoggerFactory.CreateLogger<ChunkReader>(),
-            };
-            try
-            {
-                var Chunks = Reader.ReadToEnd().ToList();
-                Console.WriteLine();
-                Console.WriteLine($"###[ {FileName} , Length: ({Stream.Length}) Byte(s) ]###");
-                Console.Out.WriteChunckSummary(Chunks);
-                foreach (var Chunk in Chunks)
-                    Console.Out.WriteChunkBodyInfo(Chunk);
-                return 0;
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine("read error : {0}", e);
-                Logger.LogError(e, "error: {e}", e);
-                return -1;
+            StreamWriter? OutFileWriter = null;
+            if (!string.IsNullOrEmpty(output))
+                Writer = OutFileWriter = new StreamWriter(Path.IsPathRooted(output) ? output : Path.GetFullPath(output, Environment.ContentRootPath), false, new UTF8Encoding(false));
+            using (OutFileWriter)
+            {   
+                var FullPath = Path.IsPathRooted(FileName) ? FileName : Path.GetFullPath(FileName, Environment.ContentRootPath);
+                if (!File.Exists(FullPath))
+                {
+                    Console.Error.WriteLine($"file not found: {FullPath}");
+                    return 9;
+                }
+                var FileInfo = new FileInfo(FullPath);
+                using var Stream = FileInfo.Open(FileMode.Open, FileAccess.Read);
+                using var Reader = new ChunkReader(Stream, true)
+                {
+                    Logger = LoggerFactory.CreateLogger<ChunkReader>(),
+                };
+                try
+                {
+                    var Chunks = Reader.ReadToEnd().ToList();
+                    Writer.WriteLine();
+                    Writer.WriteLine($"###[ {FileName} , Length: ({Stream.Length}) Byte(s) ]###");
+                    Writer.WriteChunckSummary(Chunks);
+                    foreach (var Chunk in Chunks)
+                        Writer.WriteChunkBodyInfo(Chunk);
+                    return 0;
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine("read error : {0}", e);
+                    Logger.LogError(e, "error: {e}", e);
+                    return -1;
+                }
             }
         }
     }
