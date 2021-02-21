@@ -9,6 +9,8 @@ using Ddr.Ssq.Printing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Ddr.Ssq.AnalyzeTool
 {
@@ -22,6 +24,10 @@ namespace Ddr.Ssq.AnalyzeTool
         }
         static IHostBuilder CreateDefaultBuilder(string[] args)
             => Host.CreateDefaultBuilder(args)
+            .ConfigureServices((context, services) => {
+                services.AddOptions<OutputOptions>()
+                    .Bind(context.Configuration.GetSection("Output"));
+            })
             .ConfigureLogging((context, builder) =>
             {
                 builder.ClearProviders();
@@ -39,8 +45,10 @@ namespace Ddr.Ssq.AnalyzeTool
         readonly IHostEnvironment Environment;
         readonly ILogger<Program> Logger;
         readonly ILoggerFactory LoggerFactory;
-        public Program(IHostEnvironment Environment, ILogger<Program> Logger, IConfiguration Configuration, ILoggerFactory LoggerFactory, [Option(null, "no logo")] bool nologo = false)
+        readonly IOptions<OutputOptions> OutputOptions;
+        public Program(IHostEnvironment Environment, ILogger<Program> Logger, IConfiguration Configuration, ILoggerFactory LoggerFactory, IOptions<OutputOptions> OutputOptions, [Option(null, "no logo")] bool nologo = false)
         {
+            this.OutputOptions = OutputOptions;
             if (!nologo)
                 Console.WriteLine(@"
 ##############################################################
@@ -92,6 +100,7 @@ namespace Ddr.Ssq.AnalyzeTool
                 {
                     Logger = LoggerFactory.CreateLogger<ChunkReader>(),
                 };
+                var Options = OutputOptions.Value;
                 try
                 {
                     var Chunks = Reader.ReadToEnd().ToList();
@@ -99,7 +108,7 @@ namespace Ddr.Ssq.AnalyzeTool
                     Writer.WriteLine($"###[ {FileName} , Length: ({Stream.Length}) Byte(s) ]###");
                     Writer.WriteChunckSummary(Chunks);
                     foreach (var Chunk in Chunks)
-                        Writer.WriteChunkBodyInfo(Chunk);
+                        Writer.WriteChunkBodyInfo(Chunk, Options);
                     return 0;
                 }
                 catch (Exception e)

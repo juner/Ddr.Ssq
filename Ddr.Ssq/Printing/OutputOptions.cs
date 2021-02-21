@@ -7,19 +7,65 @@ namespace Ddr.Ssq.Printing
 {
     public sealed class OutputOptions : ICloneable
     {
+        /// <summary>
+        /// <see cref="IOtherDataBody"/> を表示する
+        /// </summary>
+        public bool ViewOtherBinary { get; set; } = false;
+        /// <summary>
+        /// ステップのマッピング設定
+        /// </summary>
         public CharMappingType MappingType { get; set; }
+        /// <summary>
+        /// ←
+        /// </summary>
         public string LeftArrow { get; set; } = string.Empty;
+        /// <summary>
+        /// →
+        /// </summary>
         public string RightArrow { get; set; } = string.Empty;
+        /// <summary>
+        /// ↑
+        /// </summary>
         public string UpArrow { get; set; } = string.Empty;
+        /// <summary>
+        /// ↓
+        /// </summary>
         public string DownArrow { get; set; } = string.Empty;
+        /// <summary>
+        /// ↗
+        /// </summary>
         public string NorthEastArrow { get; set; } = string.Empty;
+        /// <summary>
+        /// ↖
+        /// </summary>
         public string NorthWestArrow { get; set; } = string.Empty;
+        /// <summary>
+        /// ◆
+        /// </summary>
         public string ShockArrow { get; set; } = string.Empty;
+        /// <summary>
+        /// ＃
+        /// </summary>
         public string FreezeArrowSign { get; set; } = string.Empty;
+        /// <summary>
+        /// 長
+        /// </summary>
         public string FreezeArrowWord { get; set; } = string.Empty;
+        /// <summary>
+        /// L
+        /// </summary>
         public string FreezeArrowCharactor { get; set; } = string.Empty;
+        /// <summary>
+        /// 衝
+        /// </summary>
         public string ShockArrowWord { get; set; } = string.Empty;
+        /// <summary>
+        /// …
+        /// </summary>
         public string EmptyArrow { get; set; } = string.Empty;
+        /// <summary>
+        /// "　"
+        /// </summary>
         internal string NoArrow { get; set; } = string.Empty;
 
         static readonly Dictionary<Encoding, CharMappingType> MappingTypes = new();
@@ -101,7 +147,7 @@ namespace Ddr.Ssq.Printing
         }
         public OutputOptions Clone()
         {
-            return (OutputOptions)this.MemberwiseClone();
+            return (OutputOptions)MemberwiseClone();
         }
         object ICloneable.Clone() => Clone();
     }

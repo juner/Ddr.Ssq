@@ -7,6 +7,10 @@
     "Ssq.AnalyzeTool (file / Env:Production)": {
       "commandName": "Project",
       "commandLineArgs": "read \"..\\abso.ssq\" --Environment Production --contentRoot \"$(SolutionDir)"
+    },
+    "Ssq.AnalyzeTool (file / Env:Development) Output:ViewOtherBinary": {
+      "commandName": "Project",
+      "commandLineArgs": "read \"..\\abso.ssq\" --Environment Development  --Output:ViewOtherBinary=true --contentRoot \"$(SolutionDir)"
     }
   }
 }
