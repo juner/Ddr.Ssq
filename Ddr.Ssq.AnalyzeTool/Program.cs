@@ -119,5 +119,51 @@ namespace Ddr.Ssq.AnalyzeTool
                 }
             }
         }
+        [Command("adjust", "reading SSQ/CSQ information.")]
+        public int Adjust([Option("i", "input chunk file.")] string input, [Option("o", "output chunk file.")]string output)
+        {
+            if (!string.IsNullOrEmpty(Environment.ContentRootPath))
+                Directory.SetCurrentDirectory(Environment.ContentRootPath);
+            var InputFullPath = Path.IsPathRooted(input) ? input : Path.GetFullPath(input, Environment.ContentRootPath);
+            var OutputFullPath = Path.IsPathRooted(output) ? output : Path.GetFullPath(output, Environment.ContentRootPath);
+            if (!File.Exists(InputFullPath))
+            {
+                Console.Error.WriteLine($"input file not found: {InputFullPath}");
+                return -1;
+            }
+            var OutDir = Path.GetDirectoryName(OutputFullPath)!;
+            if (!Directory.Exists(OutDir))
+                Directory.CreateDirectory(OutDir);
+            Chunk[] Chunks;
+            {
+                // read file
+                var InputFile = new FileInfo(InputFullPath);
+                using var InputStream = InputFile.OpenRead();
+                using var Reader = new ChunkReader(InputStream)
+                {
+                    Logger = LoggerFactory.CreateLogger<ChunkReader>(),
+                };
+                Chunks = Reader.ReadToEnd().ToArray();
+            }
+            {
+                foreach(var Chunk in Chunks)
+                {
+                    if (Chunk.Body is BiginFinishConfigBody Body)
+                    {
+                        var Entries = Body.GetEntries();
+                        var Node = Entries.First;
+                        if (Node is null)
+                            continue;
+                        // TODO 
+                    }
+                }
+            }
+            {
+                var OutputFile = new FileInfo(OutputFullPath);
+                using var OutputStream = OutputFile.Create();
+
+            }
+            return 0;
+        }
     }
 }
