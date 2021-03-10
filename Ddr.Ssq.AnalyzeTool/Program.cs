@@ -7,9 +7,9 @@ using ConsoleAppFramework;
 using Ddr.Ssq.IO;
 using Ddr.Ssq.Printing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Ddr.Ssq.AnalyzeTool
@@ -24,7 +24,8 @@ namespace Ddr.Ssq.AnalyzeTool
         }
         static IHostBuilder CreateDefaultBuilder(string[] args)
             => Host.CreateDefaultBuilder(args)
-            .ConfigureServices((context, services) => {
+            .ConfigureServices((context, services) =>
+            {
                 services.AddOptions<OutputOptions>()
                     .Bind(context.Configuration.GetSection("Output"));
             })
@@ -87,7 +88,7 @@ namespace Ddr.Ssq.AnalyzeTool
             if (!string.IsNullOrEmpty(output))
                 Writer = OutFileWriter = new StreamWriter(Path.IsPathRooted(output) ? output : Path.GetFullPath(output, Environment.ContentRootPath), false, new UTF8Encoding(false));
             using (OutFileWriter)
-            {   
+            {
                 var FullPath = Path.IsPathRooted(FileName) ? FileName : Path.GetFullPath(FileName, Environment.ContentRootPath);
                 if (!File.Exists(FullPath))
                 {
