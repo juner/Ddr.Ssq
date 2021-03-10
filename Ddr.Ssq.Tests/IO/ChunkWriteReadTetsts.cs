@@ -28,8 +28,8 @@ namespace Ddr.Ssq.IO.Tests
                 }
                 {
                     // StepData
-                    var Body = new StepDataBody{ TimeOffsets = new []{0x9800, 0x9C00, 0xA000,}, Values = new byte[]{ 0x10, 0x18, 0x40, }};
-                    var Header = new ChunkHeader(Length: Marshal.SizeOf<ChunkHeader>() + Body.Size(), Type: ChunkType.StepData, Param:0x0118, Entry:0x3);
+                    var Body = new StepDataBody { TimeOffsets = new[] { 0x9800, 0x9C00, 0xA000, }, Values = new byte[] { 0x10, 0x18, 0x40, } };
+                    var Header = new ChunkHeader(Length: Marshal.SizeOf<ChunkHeader>() + Body.Size(), Type: ChunkType.StepData, Param: 0x0118, Entry: 0x3);
                     yield return WriteAndReadTest(Header, Body);
                 }
                 static object?[] WriteAndReadTest(ChunkHeader Header, IBody Body)

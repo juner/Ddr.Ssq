@@ -81,7 +81,7 @@ namespace Ddr.Ssq.Printing
                     (ChunkType.StepData, StepDataBody Body) => StepDataToFormatEnumerable(Chunk.Header, Body, Options),
                     _ => Enumerable.Empty<string>(),
                 };
-                
+
                 if (Chunk.Body is IOtherDataBody OtherDataBody)
                     Lines = Lines.Concat(OtherDataToFormatEnumerable(Chunk.Header, OtherDataBody, Options));
 
