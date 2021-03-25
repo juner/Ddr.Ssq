@@ -96,8 +96,18 @@ namespace Ddr.Ssq.IO
         }
         public IBody ReadBody(in ChunkHeader Header)
         {
-            if (Header is { Type: ChunkType.EndOfFile } or { Length: 0 } or { Entry: 0 })
+            if (Header is { Type: ChunkType.EndOfFile })
                 return new EmptyBody();
+            if (Header is { Length: <= 0 })
+            {
+                Logger.LogWarning("Length is {Length}", Header.Length);
+                return new EmptyBody();
+            }
+            if (Header is { Entry: <= 0 })
+            {
+                Logger.LogWarning("Entry is {Entry}", Header.Entry);
+                return new EmptyBody();
+            }
             var Entry = Header.Entry;
             var Length = Header.Length;
             var Size = Marshal.SizeOf<ChunkHeader>();
@@ -194,7 +204,8 @@ namespace Ddr.Ssq.IO
                 var Span = buffer.Memory.Span[..UseSize];
                 var readed = Stream.Read(Span);
                 Logger.LogReaded(Stream, readed, Span[..readed]);
-                Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
+                if (UseSize != readed)
+                    Logger.LogWarning($"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
                 var OtherData = Span.ToArray();
                 OtherDataBody.Values = OtherData;
                 Logger.LogResult(nameof(IOtherDataBody.Values), OtherData);

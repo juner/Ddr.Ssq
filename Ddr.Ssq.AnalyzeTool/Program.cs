@@ -76,20 +76,22 @@ namespace Ddr.Ssq.AnalyzeTool
         /// <summary>
         /// ファイル読み込みして情報を表示する機能
         /// </summary>
-        /// <param name="FileName"></param>
+        /// <param name="input"></param>
         /// <returns></returns>
         [Command("read", "reading SSQ/CSQ information.")]
-        public int ReadInfo([Option(0, "view chunk file.")] string FileName, [Option("o", "output filename.", DefaultValue = null)] string? output = null)
+        public int ReadInfo([Option("i", "input chunk filename.")] string input, [Option("o", "output filename.", DefaultValue = null)] string? output = null)
         {
+            Logger.LogDebug("input: {input}", input);
             var Writer = Console.Out;
-            if (!string.IsNullOrEmpty(Environment.ContentRootPath))
-                Directory.SetCurrentDirectory(Environment.ContentRootPath);
             StreamWriter? OutFileWriter = null;
             if (!string.IsNullOrEmpty(output))
+            {
                 Writer = OutFileWriter = new StreamWriter(Path.IsPathRooted(output) ? output : Path.GetFullPath(output, Environment.ContentRootPath), false, new UTF8Encoding(false));
+                Logger.LogDebug("output: {output}", output);
+            }
             using (OutFileWriter)
             {
-                var FullPath = Path.IsPathRooted(FileName) ? FileName : Path.GetFullPath(FileName, Environment.ContentRootPath);
+                var FullPath = Path.IsPathRooted(input) ? input : Path.GetFullPath(input, Environment.ContentRootPath);
                 if (!File.Exists(FullPath))
                 {
                     Console.Error.WriteLine($"file not found: {FullPath}");
@@ -106,7 +108,7 @@ namespace Ddr.Ssq.AnalyzeTool
                 {
                     var Chunks = Reader.ReadToEnd().ToList();
                     Writer.WriteLine();
-                    Writer.WriteLine($"###[ {FileName} , Length: ({Stream.Length}) Byte(s) ]###");
+                    Writer.WriteLine($"###[ {input} , Length: ({Stream.Length}) Byte(s) ]###");
                     Writer.WriteChunckSummary(Chunks);
                     foreach (var Chunk in Chunks)
                         Writer.WriteChunkBodyInfo(Chunk, Options);
@@ -114,11 +116,39 @@ namespace Ddr.Ssq.AnalyzeTool
                 }
                 catch (Exception e)
                 {
+                    Console.Error.WriteLine($"input: {input}");
                     Console.Error.WriteLine("read error : {0}", e);
                     Logger.LogError(e, "error: {e}", e);
                     return -1;
                 }
             }
+        }
+        [Command("read-dir", "reading SSQ/CSQ information. of dir.")]
+        public int ReadInfoDir([Option("i", "view chunk file pattern.")] string input,
+            [Option("d", "input directory.", DefaultValue = "./")] string dir = "./",
+            [Option("e", "output ext", DefaultValue = ".txt")] string outext = ".txt",
+            [Option("o", "output dir")] string? outdir = null,
+            [Option("s", "error skip")] bool skip = false)
+        {
+            var _InputDir = Path.IsPathRooted(dir) ? dir : Path.GetFullPath(dir, Environment.ContentRootPath);
+            var _OutputDir = outdir is null ? null : Path.IsPathRooted(outdir) ? outdir : Path.GetFullPath(outdir, Environment.ContentRootPath);
+            Logger.LogDebug("inputdir:{inputdir}", _InputDir);
+            Logger.LogDebug("outputdir:{outputdir}", _OutputDir);
+            int Result = 0;
+            foreach (var path in Directory.EnumerateFiles(_InputDir, input))
+            {
+                var _output = _OutputDir is null ? null : Path.GetFullPath(Path.GetFileNameWithoutExtension(path) + outext, _OutputDir);
+                var result = ReadInfo(path, _output);
+                if (result is 0)
+                    continue;
+                if (skip)
+                {
+                    Result = result;
+                    continue;
+                }
+                return result;
+            }
+            return Result;
         }
     }
 }
