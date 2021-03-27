@@ -38,6 +38,11 @@ namespace Ddr.Ssq.IO
                     Logger.LogTrace("ReadToEnd skip.");
                     yield break;
                 }
+                else if (Chunk.Body is EmptyBody)
+                {
+                    Logger.LogTrace("EmptyBody skip.");
+                    yield break;
+                }
             }
         }
         public Chunk ReadChunk()
@@ -206,7 +211,7 @@ namespace Ddr.Ssq.IO
                 Logger.LogReaded(Stream, readed, Span[..readed]);
                 if (UseSize != readed)
                     Logger.LogWarning($"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
-                var OtherData = Span.ToArray();
+                var OtherData = Span[..readed].ToArray();
                 OtherDataBody.Values = OtherData;
                 Logger.LogResult(nameof(IOtherDataBody.Values), OtherData);
             }

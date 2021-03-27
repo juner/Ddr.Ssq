@@ -14,7 +14,7 @@
     },
     "Ssq.AnalyzeTool read-dir command (file / Env:Development) Output:ViewOtherBinary": {
       "commandName": "Project",
-      "commandLineArgs": "read-dir --input *.ssq --dir \"..\\DDR_SSQcheck\\ssq_5\" --outext .txt --Environment Development  --Output:ViewOtherBinary=true --contentRoot \"$(SolutionDir)"
+      "commandLineArgs": "read-dir --input *.ssq --dir \"..\\DDR_SSQcheck\\ssq_5\" --outdir \"..\\output\" --Environment Development  --Output:ViewOtherBinary=true --contentRoot \"$(SolutionDir)"
     }
   }
 }

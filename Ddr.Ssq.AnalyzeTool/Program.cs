@@ -74,20 +74,32 @@ namespace Ddr.Ssq.AnalyzeTool
             Logger.LogDebug($"Console.OutputEncoding.WebName:{Console.OutputEncoding.WebName}");
         }
         /// <summary>
-        /// ファイル読み込みして情報を表示する機能
+        /// read info from file.
         /// </summary>
         /// <param name="input"></param>
+        /// <param name="output"></param>
+        /// <param name="verbose"></param>
         /// <returns></returns>
         [Command("read", "reading SSQ/CSQ information.")]
-        public int ReadInfo([Option("i", "input chunk filename.")] string input, [Option("o", "output filename.", DefaultValue = null)] string? output = null)
+        public int ReadInfo(
+            [Option("i", "input chunk filename.")] string input,
+            [Option("o", "output filename.", DefaultValue = null)] string? output = null,
+            [Option("v")] bool verbose = false)
         {
             Logger.LogDebug("input: {input}", input);
+            if (verbose)
+                Console.WriteLine("input: {0}", input);
             var Writer = Console.Out;
             StreamWriter? OutFileWriter = null;
+            bool isOutput = false;
             if (!string.IsNullOrEmpty(output))
             {
-                Writer = OutFileWriter = new StreamWriter(Path.IsPathRooted(output) ? output : Path.GetFullPath(output, Environment.ContentRootPath), false, new UTF8Encoding(false));
-                Logger.LogDebug("output: {output}", output);
+                output = Path.IsPathRooted(output) ? output : Path.GetFullPath(output, Environment.ContentRootPath);
+                var outdir = Path.GetDirectoryName(output);
+                if (!Directory.Exists(outdir))
+                    Directory.CreateDirectory(outdir!);
+                isOutput = true;
+                Writer = OutFileWriter = new StreamWriter(output, false, new UTF8Encoding(false));
             }
             using (OutFileWriter)
             {
@@ -112,6 +124,12 @@ namespace Ddr.Ssq.AnalyzeTool
                     Writer.WriteChunckSummary(Chunks);
                     foreach (var Chunk in Chunks)
                         Writer.WriteChunkBodyInfo(Chunk, Options);
+                    if (isOutput)
+                    {
+                        Logger.LogDebug("output: {output}", output);
+                        if (verbose)
+                            Console.WriteLine("output: {0}", output);
+                    }
                     return 0;
                 }
                 catch (Exception e)
@@ -123,22 +141,38 @@ namespace Ddr.Ssq.AnalyzeTool
                 }
             }
         }
+        /// <summary>
+        /// read info from dir
+        /// </summary>
+        /// <param name="input">input file pattern. </param>
+        /// <param name="dir">input directory. default: ./</param>
+        /// <param name="outtext">output ext. default: .txt</param>
+        /// <param name="outdir">output directory. set enable outputfile.</param>
+        /// <param name="verbose">verbose</param>
+        /// <returns></returns>
         [Command("read-dir", "reading SSQ/CSQ information. of dir.")]
         public int ReadInfoDir([Option("i", "view chunk file pattern.")] string input,
             [Option("d", "input directory.", DefaultValue = "./")] string dir = "./",
             [Option("e", "output ext", DefaultValue = ".txt")] string outext = ".txt",
             [Option("o", "output dir")] string? outdir = null,
-            [Option("s", "error skip")] bool skip = false)
+            [Option("s", "error skip")] bool skip = false,
+            [Option("v")] bool verbose = false)
         {
             var _InputDir = Path.IsPathRooted(dir) ? dir : Path.GetFullPath(dir, Environment.ContentRootPath);
             var _OutputDir = outdir is null ? null : Path.IsPathRooted(outdir) ? outdir : Path.GetFullPath(outdir, Environment.ContentRootPath);
             Logger.LogDebug("inputdir:{inputdir}", _InputDir);
-            Logger.LogDebug("outputdir:{outputdir}", _OutputDir);
+            if (verbose)
+                Console.WriteLine("inputdir: {0}", _InputDir);
+            Logger.LogDebug("outputdir: {outputdir}", _OutputDir);
+            if (verbose)
+                Console.WriteLine("outputdir: {0}", _OutputDir);
             int Result = 0;
             foreach (var path in Directory.EnumerateFiles(_InputDir, input))
             {
                 var _output = _OutputDir is null ? null : Path.GetFullPath(Path.GetFileNameWithoutExtension(path) + outext, _OutputDir);
-                var result = ReadInfo(path, _output);
+                var result = ReadInfo(path, _output, verbose);
+                if (verbose)
+                    Console.WriteLine("Result: {0}", result);
                 if (result is 0)
                     continue;
                 if (skip)

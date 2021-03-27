@@ -10,6 +10,7 @@ namespace Ddr.Ssq
     public struct ChunkHeader
     {
         public int Length;
+        public uint LongLength { readonly get => unchecked((uint)Length); set => Length = unchecked((int)value); }
         [MarshalAs(UnmanagedType.I2)]
         public ChunkType Type;
         public short Param;
@@ -31,7 +32,7 @@ namespace Ddr.Ssq
         internal readonly string GetDebuggerDisplay()
         {
             IEnumerable<string?> members = new[] {
-                Length<=0 ? null: $"{nameof(Length)}:{Length}",
+                Length == 0 ? null : Length>0 ? $"{nameof(Length)}:{Length}" : $"{nameof(LongLength)}:{LongLength}",
                 $"{nameof(Type)}:{Type.ToMemberName()}({Type:d})",
                 $"{nameof(Param)}:0x{Param:X4}",
                 $"{nameof(Entry)}:0x{Entry:X8}",
