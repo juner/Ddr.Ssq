@@ -47,18 +47,33 @@ namespace Ddr.Ssq.AnalyzeTool
         readonly ILogger<Program> Logger;
         readonly ILoggerFactory LoggerFactory;
         readonly IOptions<OutputOptions> OutputOptions;
-        public Program(IHostEnvironment Environment, ILogger<Program> Logger, IConfiguration Configuration, ILoggerFactory LoggerFactory, IOptions<OutputOptions> OutputOptions, [Option(null, "no logo")] bool nologo = false)
+        readonly IConfiguration Configuration;
+        public Program(
+            IHostEnvironment Environment,
+            ILogger<Program> Logger,
+            IConfiguration Configuration,
+            ILoggerFactory LoggerFactory,
+            IOptions<OutputOptions> OutputOptions)
         {
             this.OutputOptions = OutputOptions;
+            this.Environment = Environment;
+            this.Logger = Logger;
+            this.LoggerFactory = LoggerFactory;
+            this.Configuration = Configuration;
+        }
+        void InitLog(bool nologo, bool verbose)
+        {
             if (!nologo)
                 Console.WriteLine(@"
 ##############################################################
 ### Check DDR SSQ/CSQ Analyze tool (C) pumpCurry 2019-2020 ###
 ##############################################################
 ");
-            this.Environment = Environment;
-            this.Logger = Logger;
-            this.LoggerFactory = LoggerFactory;
+            if (verbose)
+            {
+                var oo = this.OutputOptions.Value;
+                Console.WriteLine("ViewOtherBinary:{0}", oo.ViewOtherBinary);
+            }
             {
                 Logger.LogDebug(nameof(Environment) + ":");
                 using var b = Logger.BeginScope(nameof(Environment));
@@ -84,7 +99,13 @@ namespace Ddr.Ssq.AnalyzeTool
         public int ReadInfo(
             [Option("i", "input chunk filename.")] string input,
             [Option("o", "output filename.", DefaultValue = null)] string? output = null,
+            [Option(null, "no logo")] bool nologo = false,
             [Option("v")] bool verbose = false)
+        {
+            InitLog(nologo, verbose);
+            return _ReadInfo(input, output, verbose);
+        }
+        int _ReadInfo(string input, string? output, bool verbose)
         {
             Logger.LogDebug("input: {input}", input);
             if (verbose)
@@ -156,7 +177,13 @@ namespace Ddr.Ssq.AnalyzeTool
             [Option("e", "output ext", DefaultValue = ".txt")] string outext = ".txt",
             [Option("o", "output dir")] string? outdir = null,
             [Option("s", "error skip")] bool skip = false,
+            [Option(null, "no logo")] bool nologo = false,
             [Option("v")] bool verbose = false)
+        {
+            InitLog(nologo, verbose);
+            return _ReadInfoDir(input, dir, outext, outdir, skip, verbose);
+        }
+        int _ReadInfoDir(string input, string dir, string outext, string? outdir, bool skip, bool verbose)
         {
             var _InputDir = Path.IsPathRooted(dir) ? dir : Path.GetFullPath(dir, Environment.ContentRootPath);
             var _OutputDir = outdir is null ? null : Path.IsPathRooted(outdir) ? outdir : Path.GetFullPath(outdir, Environment.ContentRootPath);
@@ -170,7 +197,7 @@ namespace Ddr.Ssq.AnalyzeTool
             foreach (var path in Directory.EnumerateFiles(_InputDir, input))
             {
                 var _output = _OutputDir is null ? null : Path.GetFullPath(Path.GetFileNameWithoutExtension(path) + outext, _OutputDir);
-                var result = ReadInfo(path, _output, verbose);
+                var result = _ReadInfo(path, _output, verbose);
                 if (verbose)
                     Console.WriteLine("Result: {0}", result);
                 if (result is 0)
