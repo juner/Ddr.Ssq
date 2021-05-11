@@ -137,7 +137,7 @@ namespace Ddr.Ssq.AnalyzeTool
         /// </summary>
         /// <param name="input">input file pattern. </param>
         /// <param name="dir">input directory. default: ./</param>
-        /// <param name="outtext">output ext. default: .txt</param>
+        /// <param name="outext">output ext. default: .txt</param>
         /// <param name="outdir">output directory. set enable outputfile.</param>
         /// <param name="verbose">verbose</param>
         /// <returns></returns>
