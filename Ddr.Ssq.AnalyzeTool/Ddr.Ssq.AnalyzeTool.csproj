@@ -19,13 +19,12 @@
     <ProjectReference Include="..\Ddr.Ssq\Ddr.Ssq.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="appsettings.Development.json">
+    <None Update="appsettings.json;appsettings.*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    <None Update="appsettings.*.json">
+      <DependentUpon>appsettings.json</DependentUpon>
     </None>
   </ItemGroup>
 </Project>
