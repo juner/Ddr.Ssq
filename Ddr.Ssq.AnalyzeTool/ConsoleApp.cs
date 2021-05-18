@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -181,7 +182,13 @@ namespace Ddr.Ssq.AnalyzeTool
             }
             return Result;
         }
-        [Command("adjust", "reading SSQ/CSQ information.")]
+        /// <summary>
+        /// info ajust.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="output"></param>
+        /// <returns></returns>
+        [Command("adjust", "adjust SSQ/CSQ information.")]
         public int Adjust([Option("i", "input chunk file.")] string input, [Option("o", "output chunk file.")] string output)
         {
             if (!string.IsNullOrEmpty(Environment.ContentRootPath))
@@ -193,10 +200,15 @@ namespace Ddr.Ssq.AnalyzeTool
                 Console.Error.WriteLine($"input file not found: {InputFullPath}");
                 return -1;
             }
+
+
+
+
             var OutDir = Path.GetDirectoryName(OutputFullPath)!;
             if (!Directory.Exists(OutDir))
                 Directory.CreateDirectory(OutDir);
             Chunk[] Chunks;
+            List<Chunk> ChangedChunk = new();
             {
                 // read file
                 var InputFile = new FileInfo(InputFullPath);
@@ -207,6 +219,15 @@ namespace Ddr.Ssq.AnalyzeTool
                 };
                 Chunks = Reader.ReadToEnd().ToArray();
             }
+
+
+
+
+
+
+
+
+
             {
                 foreach (var Chunk in Chunks)
                 {
@@ -216,14 +237,42 @@ namespace Ddr.Ssq.AnalyzeTool
                         var Node = Entries.First;
                         if (Node is null)
                             continue;
-                        // TODO 
+                        bool IsAdjust = false;
+                        do
+                        {
+                            if (Node.Value.TimeOffset < 0)
+                            {
+                                var diff = 0 - Node.Value.TimeOffset;
+                                var _Node = Node;
+                                Logger.LogInformation("adjust file: TimeOffset:{TimeOffset} -> 0", Node.Value.TimeOffset, Node.Value.TimeOffset + diff);
+                                do
+                                {
+                                    _Node.Value.TimeOffset += diff;
+                                    IsAdjust = true;
+                                } while ((_Node = _Node?.Next) is { });
+                            }
+                        } while ((Node = Node?.Next) is { });
+                        if (IsAdjust)
+                            ChangedChunk.Add(Chunk);
                     }
                 }
             }
             {
+                if (OutputFullPath == InputFullPath && ChangedChunk.Count == 0)
+                {
+                    Console.WriteLine("no changed.");
+                    return 0;
+                }
+                var InputFile = new FileInfo(InputFullPath);
                 var OutputFile = new FileInfo(OutputFullPath);
-                using var OutputStream = OutputFile.Create();
-
+                InputFile.CopyTo(OutputFullPath);
+                using var OutputStream = OutputFile.OpenWrite();
+                using var ChunkWriter = new ChunkWriter(OutputStream);
+                foreach (var Chunk in ChangedChunk)
+                {
+                    OutputStream.Position = Chunk.Offset;
+                    ChunkWriter.WriteChunk(Chunk.Header, Chunk.Body);
+                }
             }
             return 0;
         }
