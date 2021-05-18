@@ -1,16 +1,20 @@
 {
   "profiles": {
-    "Ssq.AnalyzeTool (file / Env:Development)": {
+    "Ssq.AnalyzeTool read command (file / Env:Development)": {
       "commandName": "Project",
-      "commandLineArgs": "read \"..\\abso.ssq\" --Environment Development --contentRoot \"$(SolutionDir)"
+      "commandLineArgs": "read --input \"..\\abso.ssq\" --Environment Development --contentRoot \"$(SolutionDir)"
     },
-    "Ssq.AnalyzeTool (file / Env:Production)": {
+    "Ssq.AnalyzeTool read command (file / Env:Production)": {
       "commandName": "Project",
-      "commandLineArgs": "read \"..\\abso.ssq\" --Environment Production --contentRoot \"$(SolutionDir)"
+      "commandLineArgs": "read --input \"..\\abso.ssq\" --Environment Production --contentRoot \"$(SolutionDir)"
     },
-    "Ssq.AnalyzeTool (file / Env:Development) Output:ViewOtherBinary": {
+    "Ssq.AnalyzeTool read command (file / Env:Development) Output:ViewOtherBinary": {
       "commandName": "Project",
-      "commandLineArgs": "read \"..\\abso.ssq\" --Environment Development  --Output:ViewOtherBinary=true --contentRoot \"$(SolutionDir)"
+      "commandLineArgs": "read --input \"..\\abso.ssq\" --Environment Development  --Output:ViewOtherBinary=true --contentRoot \"$(SolutionDir)"
+    },
+    "Ssq.AnalyzeTool read-dir command (file / Env:Development) Output:ViewOtherBinary": {
+      "commandName": "Project",
+      "commandLineArgs": "read-dir --input *.ssq --dir \"..\\DDR_SSQcheck\\ssq_5\" --outdir \"..\\out5\" --Environment Development  --verbose --Output:ViewOtherBinary true --contentRoot \"$(SolutionDir)"
     }
   }
 }
