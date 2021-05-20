@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Ddr.Ssq
+﻿namespace Ddr.Ssq
 {
     public class Chunk
     {
