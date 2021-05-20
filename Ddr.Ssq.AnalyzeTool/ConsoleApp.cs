@@ -189,7 +189,7 @@ namespace Ddr.Ssq.AnalyzeTool
         /// <param name="output"></param>
         /// <returns></returns>
         [Command("adjust", "adjust SSQ/CSQ information.")]
-        public int Adjust([Option("i", "input chunk file.")] string input, [Option("o", "output chunk file.")] string output)
+        public int Adjust([Option("i", "input chunk file.")] string input, [Option("o", "output chunk file.")] string output, [Option("y", "override confirmation to \"Yes\"")] bool Yes = false)
         {
             if (!string.IsNullOrEmpty(Environment.ContentRootPath))
                 Directory.SetCurrentDirectory(Environment.ContentRootPath);
@@ -219,15 +219,6 @@ namespace Ddr.Ssq.AnalyzeTool
                 };
                 Chunks = Reader.ReadToEnd().ToArray();
             }
-
-
-
-
-
-
-
-
-
             {
                 foreach (var Chunk in Chunks)
                 {
@@ -253,7 +244,10 @@ namespace Ddr.Ssq.AnalyzeTool
                             }
                         } while ((Node = Node?.Next) is { });
                         if (IsAdjust)
+                        {
+                            Body.SetEntries(Entries);
                             ChangedChunk.Add(Chunk);
+                        }
                     }
                 }
             }
@@ -265,7 +259,22 @@ namespace Ddr.Ssq.AnalyzeTool
                 }
                 var InputFile = new FileInfo(InputFullPath);
                 var OutputFile = new FileInfo(OutputFullPath);
-                InputFile.CopyTo(OutputFullPath);
+                if (OutputFile.Exists)
+                {
+                    if (!Yes)
+                    {
+                        char? c;
+                        do
+                        {
+                            Console.WriteLine("{0} is found. override? [y/n]", OutputFile);
+                            var Confirm = Console.ReadLine();
+                            c = Confirm?.ToUpper().FirstOrDefault();
+                        } while (c is not ('Y' or 'N'));
+                        if (c is 'N')
+                            return 0;
+                    }
+                }
+                InputFile.CopyTo(OutputFullPath, true);
                 using var OutputStream = OutputFile.OpenWrite();
                 using var ChunkWriter = new ChunkWriter(OutputStream);
                 foreach (var Chunk in ChangedChunk)

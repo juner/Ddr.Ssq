@@ -87,16 +87,15 @@ namespace Ddr.Ssq.IO
             }
             Stream.Write(Span);
         }
-        void Write(Span<byte> Span, ChunkHeader Header)
+        static void Write(Span<byte> Span, ChunkHeader Header)
         {
             MemoryMarshal.Write(Span, ref Header);
         }
-        void Write(Span<byte> Span, TempoTFPSConfigBody Body)
+        static void Write(Span<byte> Span, TempoTFPSConfigBody Body)
         {
             var Length = Span.Length;
             var TimeOffsets = MemoryMarshal.Cast<int, byte>(Body.TimeOffsets);
             var Values = MemoryMarshal.Cast<int, byte>(Body.Values);
-            Debug.Assert(Length == TimeOffsets.Length + Values.Length);
             TimeOffsets.CopyTo(Span);
             Span = Span[TimeOffsets.Length..];
             Values.CopyTo(Span);
@@ -106,12 +105,11 @@ namespace Ddr.Ssq.IO
                 OtherBody.Values.CopyTo(Span);
             }
         }
-        void Write(Span<byte> Span, BiginFinishConfigBody Body)
+        static void Write(Span<byte> Span, BiginFinishConfigBody Body)
         {
             var Length = Span.Length;
             var TimeOffsets = MemoryMarshal.Cast<int, byte>(Body.TimeOffsets);
             var Values = MemoryMarshal.Cast<BiginFinishConfigType, byte>(Body.Values);
-            Debug.Assert(Length == TimeOffsets.Length + Values.Length);
             TimeOffsets.CopyTo(Span);
             Span = Span[TimeOffsets.Length..];
             Values.CopyTo(Span);
@@ -121,12 +119,11 @@ namespace Ddr.Ssq.IO
                 OtherBody.Values.CopyTo(Span);
             }
         }
-        void Write(Span<byte> Span, StepDataBody Body)
+        static void Write(Span<byte> Span, StepDataBody Body)
         {
             var Length = Span.Length;
             var TimeOffsets = MemoryMarshal.Cast<int, byte>(Body.TimeOffsets);
             var Values = Body.Values.AsSpan();
-            Debug.Assert(Length == TimeOffsets.Length + Values.Length);
             TimeOffsets.CopyTo(Span);
             Span = Span[TimeOffsets.Length..];
             Values.CopyTo(Span);
@@ -137,11 +134,10 @@ namespace Ddr.Ssq.IO
             }
 
         }
-        void Write(Span<byte> Span, OtherBody Body)
+        static void Write(Span<byte> Span, OtherBody Body)
         {
             var Length = Span.Length;
             var OtherData = Body.Values.AsSpan();
-            Debug.Assert(Length == OtherData.Length);
             OtherData.CopyTo(Span);
         }
         public void Dispose()

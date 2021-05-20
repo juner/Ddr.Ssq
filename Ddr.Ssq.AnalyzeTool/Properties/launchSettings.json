@@ -15,6 +15,10 @@
     "Ssq.AnalyzeTool read-dir command (file / Env:Development) Output:ViewOtherBinary": {
       "commandName": "Project",
       "commandLineArgs": "read-dir --input *.ssq --dir \"..\\DDR_SSQcheck\\ssq_5\" --outdir \"..\\out5\" --Environment Development  --verbose --Output:ViewOtherBinary true --contentRoot \"$(SolutionDir)"
+    },
+    "Ssq.AnalyzeTool adjust command (file / Env:Development) Output:ViewOtherBinary": {
+      "commandName": "Project",
+      "commandLineArgs": "adjust --input ..\\DDR_SSQcheck\\ssq_5\\adre.ssq --output ..\\adre_out.ssq --Environment Development  --verbose --Output:ViewOtherBinary true --contentRoot \"$(SolutionDir)"
     }
   }
 }
