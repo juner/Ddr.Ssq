@@ -76,14 +76,14 @@ namespace Ddr.Ssq.Printing
                 var Lines = (Chunk.Header.Type, Chunk.Body) switch
                 {
                     (ChunkType.EndOfFile, _) => Enumerable.Empty<string>(),
-                    (ChunkType.TempoTFPSConfig, TempoTFPSConfigBody Body) => Tempo_TFPS_ConfigToFormatEnumerable(Chunk.Header, Body, Options),
-                    (ChunkType.BiginFinishConfig, BiginFinishConfigBody Body) => Bigin_Finish_ConfigToFormatEnumerable(Chunk.Header, Body, Options),
+                    (ChunkType.TempoTFPSConfig, TempoTFPSConfigBody Body) => Tempo_TFPS_ConfigToFormatEnumerable(Chunk.Header, Body),
+                    (ChunkType.BiginFinishConfig, BiginFinishConfigBody Body) => Bigin_Finish_ConfigToFormatEnumerable(Chunk.Header, Body),
                     (ChunkType.StepData, StepDataBody Body) => StepDataToFormatEnumerable(Chunk.Header, Body, Options),
                     _ => Enumerable.Empty<string>(),
                 };
 
                 if (Chunk.Body is IOtherDataBody OtherDataBody)
-                    Lines = Lines.Concat(OtherDataToFormatEnumerable(Chunk.Header, OtherDataBody, Options));
+                    Lines = Lines.Concat(OtherDataToFormatEnumerable(OtherDataBody, Options));
 
                 foreach (var Line in Lines)
                     Builder.AppendLine(Line);
@@ -100,7 +100,7 @@ namespace Ddr.Ssq.Printing
         /// <param name="Header"></param>
         /// <param name="Body"></param>
         /// <returns></returns>
-        internal static IEnumerable<string> Tempo_TFPS_ConfigToFormatEnumerable(ChunkHeader Header, TempoTFPSConfigBody Body, OutputOptions Options)
+        internal static IEnumerable<string> Tempo_TFPS_ConfigToFormatEnumerable(ChunkHeader Header, TempoTFPSConfigBody Body)
         {
             const ChunkType BASE_TYPE = ChunkType.TempoTFPSConfig;
             if (Header.Type is not BASE_TYPE)
@@ -128,7 +128,7 @@ namespace Ddr.Ssq.Printing
         /// <param name="Header"></param>
         /// <param name="Body"></param>
         /// <returns></returns>
-        internal static IEnumerable<string> Bigin_Finish_ConfigToFormatEnumerable(ChunkHeader Header, BiginFinishConfigBody Body, OutputOptions Options)
+        internal static IEnumerable<string> Bigin_Finish_ConfigToFormatEnumerable(ChunkHeader Header, BiginFinishConfigBody Body)
         {
             const ChunkType BASE_TYPE = ChunkType.BiginFinishConfig;
             if (Header.Type is not BASE_TYPE)
@@ -264,7 +264,7 @@ namespace Ddr.Ssq.Printing
                 yield return $"[03:STP][({TimeOffset,6:X}) {TimeOffset,8}][{string.Join("", Step)}] Delta> Offset:({DeltaOffset,6:X}){DeltaOffset,7} ";
             }
         }
-        internal static IEnumerable<string> OtherDataToFormatEnumerable(ChunkHeader Header, IOtherDataBody Body, OutputOptions Options)
+        internal static IEnumerable<string> OtherDataToFormatEnumerable(IOtherDataBody Body, OutputOptions Options)
         {
             if (!Options.ViewOtherBinary)
                 yield break;

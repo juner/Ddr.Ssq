@@ -22,6 +22,8 @@ namespace Ddr.Ssq.IO
         public ChunkWriter(Stream Stream, bool LeaveOpen, MemoryPool<byte> Pool, ILogger<ChunkWriter> Logger)
             => (this.Stream, this.LeaveOpen, this.Pool, this.Logger) = (Stream, LeaveOpen, Pool ?? MemoryPool<byte>.Shared, Logger ?? NullLogger<ChunkWriter>.Instance);
         static int headerSize;
+        private bool disposedValue;
+
         static int HeaderSize
         {
             get
@@ -87,11 +89,11 @@ namespace Ddr.Ssq.IO
             }
             Stream.Write(Span);
         }
-        void Write(Span<byte> Span, ChunkHeader Header)
+        static void Write(Span<byte> Span, ChunkHeader Header)
         {
             MemoryMarshal.Write(Span, ref Header);
         }
-        void Write(Span<byte> Span, TempoTFPSConfigBody Body)
+        static void Write(Span<byte> Span, TempoTFPSConfigBody Body)
         {
             var Length = Span.Length;
             var TimeOffsets = MemoryMarshal.Cast<int, byte>(Body.TimeOffsets);
@@ -106,7 +108,7 @@ namespace Ddr.Ssq.IO
                 OtherBody.Values.CopyTo(Span);
             }
         }
-        void Write(Span<byte> Span, BiginFinishConfigBody Body)
+        static void Write(Span<byte> Span, BiginFinishConfigBody Body)
         {
             var Length = Span.Length;
             var TimeOffsets = MemoryMarshal.Cast<int, byte>(Body.TimeOffsets);
@@ -121,7 +123,7 @@ namespace Ddr.Ssq.IO
                 OtherBody.Values.CopyTo(Span);
             }
         }
-        void Write(Span<byte> Span, StepDataBody Body)
+        static void Write(Span<byte> Span, StepDataBody Body)
         {
             var Length = Span.Length;
             var TimeOffsets = MemoryMarshal.Cast<int, byte>(Body.TimeOffsets);
@@ -137,18 +139,38 @@ namespace Ddr.Ssq.IO
             }
 
         }
-        void Write(Span<byte> Span, OtherBody Body)
+        static void Write(Span<byte> Span, OtherBody Body)
         {
             var Length = Span.Length;
             var OtherData = Body.Values.AsSpan();
             Debug.Assert(Length == OtherData.Length);
             OtherData.CopyTo(Span);
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (LeaveOpen)
+                        return;
+                    Stream.Dispose();
+                }
+                disposedValue = true;
+            }
+        }
+
+        ~ChunkWriter()
+        {
+            // このコードを変更しないでください。クリーンアップ コードを 'Dispose(bool disposing)' メソッドに記述します
+            Dispose(disposing: false);
+        }
+
         public void Dispose()
         {
-            if (LeaveOpen)
-                return;
-            Stream.Dispose();
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }
