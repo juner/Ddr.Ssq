@@ -5,30 +5,29 @@ using System.Runtime.InteropServices;
 
 namespace Ddr.Ssq
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Explicit, Pack = 1)]
     [DebuggerDisplay("{" + nameof(GetDebuggerDisplay) + "(),nq}")]
     public struct ChunkHeader
     {
+        [FieldOffset(0)]
         public int Length;
         public uint LongLength { readonly get => unchecked((uint)Length); set => Length = unchecked((int)value); }
+        [FieldOffset(4)]
         [MarshalAs(UnmanagedType.I2)]
         public ChunkType Type;
+        [FieldOffset(6)]
         public short Param;
+        [FieldOffset(6)]
+        public StepPlayType Play;
+        [FieldOffset(8)]
         public int Entry;
         public ChunkHeader(int Length = 0, ChunkType Type = ChunkType.EndOfFile, short Param = 0, int Entry = 0)
-            => (this.Length, this.Type, this.Param, this.Entry)
-            = (Length, Type, Param, Entry);
-        public PlayDifficulty PlayDifficulty
         {
-            readonly get => (PlayDifficulty)(short)((Param & 0xff00) >> 8);
-            set => Param = (short)((((short)value) << 8) | (Param & 0xff));
+            Play = default;
+            (this.Length, this.Type, this.Param, this.Entry) = (Length, Type, Param, Entry);
         }
-        public PlayStyle PlayStyle
-        {
-            readonly get => (PlayStyle)(short)(Param & 0xff);
-            set => Param = (short)((Param & 0xff00) | (((short)value) & 0xff));
-        }
-
+        public static ChunkHeader CreateStepData(int Length = 0, StepPlayType Play = default, int Entry = 0)
+            => new(Length, ChunkType.StepData, (short)Play, Entry);
         internal readonly string GetDebuggerDisplay()
         {
             IEnumerable<string?> members = new[] {
@@ -39,8 +38,8 @@ namespace Ddr.Ssq
             };
             if (Type is ChunkType.StepData)
                 members = members
-                    .Append($"{nameof(PlayDifficulty)}:{PlayDifficulty.ToMemberName()}(0x{(short)PlayDifficulty:X4})")
-                    .Append($"{nameof(PlayStyle)}:{PlayStyle.ToMemberName()}(0x{(short)PlayStyle:X4})");
+                    .Append($"{nameof(Play)}.{nameof(Play.Difficulty)}:{Play.Difficulty.ToMemberName()}(0x{(short)Play.Difficulty:X2})")
+                    .Append($"{nameof(Play)}.{nameof(Play.Style)}:{Play.Style.ToMemberName()}(0x{(short)Play.Style:X2})");
             return $"{nameof(ChunkHeader)}{{{string.Join(", ", members)}}}";
         }
     }
