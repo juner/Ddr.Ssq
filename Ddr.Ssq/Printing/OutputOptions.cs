@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Ddr.Ssq.Printing
 {
+    /// <summary>
+    /// Output Options
+    /// </summary>
     public sealed class OutputOptions : ICloneable
     {
         /// <summary>
@@ -69,6 +72,11 @@ namespace Ddr.Ssq.Printing
         internal string NoArrow { get; set; } = string.Empty;
 
         static readonly Dictionary<Encoding, CharMappingType> MappingTypes = new();
+        /// <summary>
+        /// auto mapping
+        /// </summary>
+        /// <param name="Encoding"></param>
+        /// <returns></returns>
         public OutputOptions AutoMapping(Encoding Encoding)
         {
             var Result = Clone();
@@ -145,6 +153,10 @@ namespace Ddr.Ssq.Printing
             }
             return Result;
         }
+        /// <summary>
+        /// Clone
+        /// </summary>
+        /// <returns></returns>
         public OutputOptions Clone()
         {
             return (OutputOptions)MemberwiseClone();
