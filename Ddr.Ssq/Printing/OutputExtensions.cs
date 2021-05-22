@@ -9,6 +9,9 @@ using static Ddr.Ssq.StepType;
 
 namespace Ddr.Ssq.Printing
 {
+    /// <summary>
+    /// Output Extensions
+    /// </summary>
     public static class OutputExtensions
     {
         /// <summary>
@@ -60,6 +63,7 @@ namespace Ddr.Ssq.Printing
         /// </summary>
         /// <param name="Writer"></param>
         /// <param name="Chunk"></param>
+        /// <param name="Options"></param>
         public static void WriteChunkBodyInfo(this TextWriter Writer, Chunk Chunk, OutputOptions? Options = null)
         {
             var Builder = new StringBuilder();
@@ -149,7 +153,7 @@ namespace Ddr.Ssq.Printing
         /// </summary>
         /// <param name="Header"></param>
         /// <param name="Body"></param>
-        /// <param name="type"></param>
+        /// <param name="Options"></param>
         /// <returns></returns>
         internal static IEnumerable<string> StepDataToFormatEnumerable(ChunkHeader Header, StepDataBody Body, OutputOptions Options)
         {

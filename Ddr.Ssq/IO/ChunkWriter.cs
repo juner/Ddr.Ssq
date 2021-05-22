@@ -5,20 +5,43 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ddr.Ssq.IO
 {
-    public class ChunkWriter : IDisposable
+    /// <summary>
+    /// Chunk Writer
+    /// </summary>
+    public class ChunkWriter : IDisposable, IAsyncDisposable
     {
 
         readonly Stream Stream;
         readonly bool LeaveOpen;
         readonly MemoryPool<byte> Pool;
+        /// <summary>
+        /// Logger
+        /// </summary>
         public ILogger<ChunkWriter> Logger { get; init; } = NullLogger<ChunkWriter>.Instance;
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="Stream"></param>
         public ChunkWriter(Stream Stream) : this(Stream, false, default!, default!) { }
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="Stream"></param>
+        /// <param name="LeaveOpen"></param>
         public ChunkWriter(Stream Stream, bool LeaveOpen) : this(Stream, LeaveOpen, default!, default!) { }
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="Stream"></param>
+        /// <param name="LeaveOpen"></param>
+        /// <param name="Pool"></param>
+        /// <param name="Logger"></param>
         public ChunkWriter(Stream Stream, bool LeaveOpen, MemoryPool<byte> Pool, ILogger<ChunkWriter> Logger)
             => (this.Stream, this.LeaveOpen, this.Pool, this.Logger) = (Stream, LeaveOpen, Pool ?? MemoryPool<byte>.Shared, Logger ?? NullLogger<ChunkWriter>.Instance);
         static int headerSize;
@@ -38,6 +61,10 @@ namespace Ddr.Ssq.IO
             foreach (ref byte s in span)
                 s = 0;
         }
+        /// <summary>
+        /// Write All Chunk
+        /// </summary>
+        /// <param name="Chunks"></param>
         public void WriteToEnd(IEnumerable<Chunk> Chunks)
         {
             foreach (var (Header, Body) in Chunks)
@@ -45,7 +72,25 @@ namespace Ddr.Ssq.IO
                 WriteChunk(Header, Body);
             }
         }
-        public void WriteChunk(ChunkHeader Header, IBody Body)
+        /// <summary>
+        /// Write All Chunk Async
+        /// </summary>
+        /// <param name="Chunks"></param>
+        /// <param name="Token"></param>
+        /// <returns></returns>
+        public async ValueTask WriteToEndAsync(IEnumerable<Chunk> Chunks, CancellationToken Token = default)
+        {
+            foreach (var (Header, Body) in Chunks)
+            {
+                await WriteChunkAsync(Header, Body, Token);
+            }
+        }
+        /// <summary>
+        /// Write Chunk
+        /// </summary>
+        /// <param name="Header"></param>
+        /// <param name="Body"></param>
+        public void WriteChunk(in ChunkHeader Header, IBody Body)
         {
             var Length = Header.Length;
             Debug.Assert((Header.Type is ChunkType.EndOfFile && Length == 0) || Length == HeaderSize + Body.Size());
@@ -53,6 +98,27 @@ namespace Ddr.Ssq.IO
                 Length = sizeof(int);
             using var Owner = Pool.Rent(Length);
             var Span = Owner.Memory[..Length].Span;
+            Stream.Write(Span);
+        }
+        /// <summary>
+        /// Write Chunk Async
+        /// </summary>
+        /// <param name="Header"></param>
+        /// <param name="Body"></param>
+        /// <param name="Token"></param>
+        /// <returns></returns>
+        public ValueTask WriteChunkAsync(in ChunkHeader Header, IBody Body, CancellationToken Token = default)
+        {
+            var Length = Header.Length;
+            Debug.Assert((Header.Type is ChunkType.EndOfFile && Length == 0) || Length == HeaderSize + Body.Size());
+            if (Length == 0)
+                Length = sizeof(int);
+            using var Owner = Pool.Rent(Length);
+            var Memory = Owner.Memory[..Length];
+            return Stream.WriteAsync(Memory, Token);
+        }
+        static void InnerWrite(Span<byte> Span, ChunkHeader Header, IBody Body)
+        {
             switch ((Header.Type, Body))
             {
                 case (ChunkType.EndOfFile, _):
@@ -87,7 +153,6 @@ namespace Ddr.Ssq.IO
                 default:
                     throw new NotSupportedException();
             }
-            Stream.Write(Span);
         }
         static void Write(Span<byte> Span, ChunkHeader Header)
         {
@@ -146,7 +211,10 @@ namespace Ddr.Ssq.IO
             Debug.Assert(Length == OtherData.Length);
             OtherData.CopyTo(Span);
         }
-
+        /// <summary>
+        /// Dispose
+        /// </summary>
+        /// <param name="disposing"></param>
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -160,17 +228,47 @@ namespace Ddr.Ssq.IO
                 disposedValue = true;
             }
         }
-
+        /// <summary>
+        /// destructor
+        /// </summary>
         ~ChunkWriter()
         {
             // このコードを変更しないでください。クリーンアップ コードを 'Dispose(bool disposing)' メソッドに記述します
             Dispose(disposing: false);
         }
-
+        /// <summary>
+        /// Dispose
+        /// </summary>
         public void Dispose()
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+        /// <summary>
+        /// Dispose Async Core
+        /// </summary>
+        /// <returns></returns>
+        protected virtual async ValueTask DisposeAsyncCore()
+        {
+            if (!disposedValue)
+            {
+                if (!LeaveOpen)
+                    await Stream.DisposeAsync();
+                disposedValue = true;
+            }
+        }
+        /// <summary>
+        /// Dispose Async
+        /// </summary>
+        /// <returns></returns>
+        public async ValueTask DisposeAsync()
+        {
+            await DisposeAsyncCore();
+            Dispose(disposing: false);
+#pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
+            // Suppress finalization.
+            GC.SuppressFinalize(this);
+#pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
         }
     }
 }

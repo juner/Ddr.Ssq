@@ -89,9 +89,17 @@ namespace Ddr.Ssq
         /// </summary>
         SoloPlayerNorthEast = StepType.Player2Up,
     }
+    /// <summary>
+    /// Step Type Extensions
+    /// </summary>
     public static class StepTypeExtensions
     {
-
+        /// <summary>
+        /// <see cref="StepType"/> -&gt; <see cref="StepPlayers"/> and <see cref="StepArrows"/>
+        /// </summary>
+        /// <param name="StepType"></param>
+        /// <param name="StepPlayer"></param>
+        /// <param name="StepArrow"></param>
 #if false
         public static void Deconstruct(this StepType StepType, out StepPlayers StepPlayer, out StepArrows StepArrow)
         {
@@ -120,32 +128,75 @@ namespace Ddr.Ssq
                 StepArrow |= StepArrows.Right;
 #endif
         }
-
+        /// <summary>
+        /// <see cref="StepTypeAttribute"/> to <see cref="StepPlayers"/> and <see cref="StepArrows"/>
+        /// </summary>
+        /// <param name="StepType"></param>
+        /// <param name="StepPlayer"></param>
+        /// <param name="StepArrow"></param>
         public static void Deconstruct(this StepTypeAttribute StepType, out StepPlayers StepPlayer, out StepArrows StepArrow)
             => (StepPlayer, StepArrow) = (StepType.StepPlayer, StepType.StepArrow);
 
     }
+    /// <summary>
+    /// Step Arrows Mask
+    /// </summary>
     public enum StepArrows : byte
     {
+        /// <summary>
+        /// Left Mask
+        /// </summary>
         [EnumMember(Value = "←")]
         Left = 0b_0001_0001,
+        /// <summary>
+        /// Down Mask
+        /// </summary>
         [EnumMember(Value = "↓")]
         Down = 0b_0010_0010,
+        /// <summary>
+        /// Up Mask
+        /// </summary>
         [EnumMember(Value = "↑")]
         Up = 0b_0100_0100,
+        /// <summary>
+        /// /Right Mask
+        /// </summary>
         [EnumMember(Value = "→")]
         Right = 0b_1000_1000,
     }
+    /// <summary>
+    /// Step Players Mask
+    /// </summary>
     public enum StepPlayers : byte
     {
+        /// <summary>
+        /// Player1 Mask
+        /// </summary>
         Player1 = 0b_0000_1111,
+        /// <summary>
+        /// Player2 Mask
+        /// </summary>
         Player2 = 0b_1111_0000,
     }
+    /// <summary>
+    /// Step Type Attribute
+    /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class StepTypeAttribute : Attribute
     {
+        /// <summary>
+        /// Step Player Type
+        /// </summary>
         public readonly StepPlayers StepPlayer;
+        /// <summary>
+        /// Step Arrow Type
+        /// </summary>
         public readonly StepArrows StepArrow;
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="StepPlayer"></param>
+        /// <param name="StepArrow"></param>
         public StepTypeAttribute(StepPlayers StepPlayer, StepArrows StepArrow)
             => (this.StepArrow, this.StepPlayer) = (StepArrow, StepPlayer);
     }

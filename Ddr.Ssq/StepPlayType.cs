@@ -22,13 +22,18 @@ namespace Ddr.Ssq
         /// </summary>
         public PlayDifficulty Difficulty;
         StepPlayType(short Param) => ParamToValue(Param, out Style, out Difficulty);
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="Style"></param>
+        /// <param name="Difficulty"></param>
         public StepPlayType(PlayStyle Style, PlayDifficulty Difficulty) => (this.Style, this.Difficulty) = (Style, Difficulty);
         /// <summary>
         /// Deconstruct <see cref="StepPlayType"/> -&gt; <see cref="ValueTuple{PlayStyle, PlayDifficulty}"/>
         /// </summary>
         /// <param name="Style"></param>
         /// <param name="Difficulty"></param>
-        public void Deconstruct(out PlayStyle Style, out PlayDifficulty Difficulty) => (Style, Difficulty) = (this.Style, this.Difficulty);
+        public readonly void Deconstruct(out PlayStyle Style, out PlayDifficulty Difficulty) => (Style, Difficulty) = (this.Style, this.Difficulty);
         /// <summary>
         /// to Param(<see cref="short"/>)
         /// </summary>

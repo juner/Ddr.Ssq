@@ -12,16 +12,42 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 namespace Ddr.Ssq.IO
 {
-    public class ChunkReader : IDisposable
+    /// <summary>
+    /// Chunk Reader
+    /// </summary>
+    public class ChunkReader : IDisposable, IAsyncDisposable
     {
         readonly Stream Stream;
         readonly bool LeaveOpen;
         readonly MemoryPool<byte> Pool;
+        /// <summary>
+        /// Logger
+        /// </summary>
         public ILogger<ChunkReader> Logger { get; init; } = NullLogger<ChunkReader>.Instance;
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="Stream"></param>
         public ChunkReader(Stream Stream) : this(Stream, false, default!, default!) { }
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="Stream"></param>
+        /// <param name="LeaveOpen"></param>
         public ChunkReader(Stream Stream, bool LeaveOpen) : this(Stream, LeaveOpen, default!, default!) { }
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="Stream"></param>
+        /// <param name="LeaveOpen"></param>
+        /// <param name="Pool"></param>
+        /// <param name="Logger"></param>
         public ChunkReader(Stream Stream, bool LeaveOpen, MemoryPool<byte> Pool, ILogger<ChunkReader> Logger)
             => (this.Stream, this.LeaveOpen, this.Pool, this.Logger) = (Stream, LeaveOpen, Pool ?? MemoryPool<byte>.Shared, Logger ?? NullLogger<ChunkReader>.Instance);
+        /// <summary>
+        /// read all chunk data.
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<Chunk> ReadToEnd()
         {
             Logger.LogDebug("START ChunkReader.ReadToEnd()");
@@ -45,6 +71,10 @@ namespace Ddr.Ssq.IO
                 }
             }
         }
+        /// <summary>
+        /// read chunk.
+        /// </summary>
+        /// <returns></returns>
         public Chunk ReadChunk()
         {
             var Offset = Stream.Position;
@@ -57,7 +87,26 @@ namespace Ddr.Ssq.IO
                 Body = Body,
             };
         }
+        /// <summary>
+        /// read chunk async
+        /// </summary>
+        /// <param name="Token"></param>
+        /// <returns></returns>
+        public async ValueTask<Chunk> ReadChunkAsync(CancellationToken Token = default)
+        {
+            var Offset = Stream.Position;
+            var Header = await ReadHeaderAsync(Token);
+            var Body = await ReadBodyAsync(Header, Token);
+            return new Chunk
+            {
+                Offset = Offset,
+                Header = Header,
+                Body = Body,
+            };
+        }
         static int headerSize;
+        private bool disposedValue;
+
         static int HeaderSize
         {
             get
@@ -67,6 +116,10 @@ namespace Ddr.Ssq.IO
                 return headerSize;
             }
         }
+        /// <summary>
+        /// read header
+        /// </summary>
+        /// <returns></returns>
         public ChunkHeader ReadHeader()
         {
             Logger.LogDebug("read header");
@@ -81,7 +134,12 @@ namespace Ddr.Ssq.IO
             Logger.LogDebug("-> {header}", header.GetDebuggerDisplay());
             return header;
         }
-        public async ValueTask<ChunkHeader> ReadHeaderAsync(CancellationToken Token)
+        /// <summary>
+        /// read header async
+        /// </summary>
+        /// <param name="Token"></param>
+        /// <returns></returns>
+        public async ValueTask<ChunkHeader> ReadHeaderAsync(CancellationToken Token = default)
         {
             Logger.LogDebug("read header");
             using var buffer = Pool.Rent(HeaderSize);
@@ -99,6 +157,11 @@ namespace Ddr.Ssq.IO
             foreach (ref byte s in span)
                 s = 0;
         }
+        /// <summary>
+        /// read body
+        /// </summary>
+        /// <param name="Header"></param>
+        /// <returns></returns>
         public IBody ReadBody(in ChunkHeader Header)
         {
             if (Header is { Type: ChunkType.EndOfFile })
@@ -218,10 +281,192 @@ namespace Ddr.Ssq.IO
             Debug.Assert(Size == Length, $"has no read byte. Size:{Size} Length:{Length}");
             return Body;
         }
+        /// <summary>
+        /// Read Body Async
+        /// </summary>
+        /// <param name="Header"></param>
+        /// <param name="Token"></param>
+        /// <returns></returns>
+        public ValueTask<IBody> ReadBodyAsync(in ChunkHeader Header, CancellationToken Token = default)
+        {
+            if (Header is { Type: ChunkType.EndOfFile })
+                return ValueTask.FromResult<IBody>(new EmptyBody());
+            if (Header is { Length: <= 0 })
+            {
+                Logger.LogWarning("Length is {Length}", Header.Length);
+                return ValueTask.FromResult<IBody>(new EmptyBody());
+            }
+            if (Header is { Entry: <= 0 })
+            {
+                Logger.LogWarning("Entry is {Entry}", Header.Entry);
+                return ValueTask.FromResult<IBody>(new EmptyBody());
+            }
+            var Type = Header.Type;
+            var Entry = Header.Entry;
+            var Length = Header.Length;
+            var Size = Marshal.SizeOf<ChunkHeader>();
+            Logger.LogDebug("usable body size Length:{Length} - HeaderSize:{HeaderSize} -> {Size}", Length, Size, Length - Size);
+            IBody Body = Header.Type switch
+            {
+                ChunkType.TempoTFPSConfig => new TempoTFPSConfigBody(),
+                ChunkType.BiginFinishConfig => new BiginFinishConfigBody(),
+                ChunkType.StepData => new StepDataBody(),
+                _ => new OtherBody(),
+            };
+            return ReadBodyAsync();
+            async ValueTask<IBody> ReadBodyAsync()
+            {
+                if (Body is ITimeOffsetBody TimeOffsetBody)
+                {
+                    var UseSize = Entry * sizeof(uint);
+                    var _Size = Size;
+                    Size += UseSize;
+                    Logger.LogDebug("{_Size} + {Entry} * {uint} -> {Size} Length:{Length}", _Size, Entry, sizeof(uint), Size, Length);
+                    Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
+                    using var buffer = Pool.Rent(UseSize);
+                    var Memory = buffer.Memory[..UseSize];
+                    var readed = await Stream.ReadAsync(Memory, Token);
+                    Logger.LogReaded(Stream, readed, Memory[..readed].Span);
+                    Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
+
+                    var TimeOffsets = MemoryMarshal.Cast<byte, int>(Memory.Span).ToArray();
+                    TimeOffsetBody.TimeOffsets = TimeOffsets;
+                    Logger.LogResult(nameof(TimeOffsetBody.TimeOffsets), TimeOffsets);
+                }
+                switch (Body)
+                {
+                    case TempoTFPSConfigBody TempoTFPSConfigBody:
+                        {
+                            var _Size = Size;
+                            var UseSize = Entry * sizeof(int);
+                            Size += UseSize;
+                            Logger.LogDebug("{_Size} + {Entry} * {int} -> {Size} Length:{Length}", _Size, Entry, sizeof(int), Size, Length);
+                            Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
+                            using var buffer = Pool.Rent(UseSize);
+                            var Memory = buffer.Memory[..UseSize];
+                            var readed = await Stream.ReadAsync(Memory, Token);
+                            Logger.LogReaded(Stream, readed, Memory[..readed].Span);
+                            Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
+                            var Tempo_TFPS_Config = MemoryMarshal.Cast<byte, int>(Memory.Span).ToArray();
+                            TempoTFPSConfigBody.Values = Tempo_TFPS_Config;
+                            Logger.LogResult(nameof(TempoTFPSConfigBody.Values), Tempo_TFPS_Config);
+                        }
+                        break;
+                    case BiginFinishConfigBody BiginFinishConfigBody:
+                        {
+                            var _Size = Size;
+                            var UseSize = Entry * sizeof(short);
+                            Size += UseSize;
+                            Logger.LogDebug("{_Size} + {Entry} * {short} -> {Size} Length:{Length}", _Size, Entry, sizeof(short), Size, Length);
+                            Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
+                            using var buffer = Pool.Rent(UseSize);
+                            var Memory = buffer.Memory[..UseSize];
+                            var readed = await Stream.ReadAsync(Memory, Token);
+                            Logger.LogReaded(Stream, readed, Memory[..readed].Span);
+                            Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
+                            var BiginFinishConfig = MemoryMarshal.Cast<byte, BiginFinishConfigType>(Memory.Span).ToArray();
+                            BiginFinishConfigBody.Values = BiginFinishConfig;
+                            Logger.LogResult(nameof(BiginFinishConfigBody.Values), BiginFinishConfig.Cast<short>());
+                        }
+                        break;
+                    case StepDataBody StepDataBody:
+                        {
+                            var _Size = Size;
+                            var UseSize = Entry * sizeof(byte);
+                            Size += UseSize;
+                            Logger.LogDebug("{_Size} + {Entry} * {int} -> {Size} Length:{Length}", _Size, Entry, sizeof(int), Size, Length);
+                            Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
+                            using var buffer = Pool.Rent(UseSize);
+                            var Memory = buffer.Memory[..UseSize];
+                            var readed = await Stream.ReadAsync(Memory, Token);
+                            Logger.LogReaded(Stream, readed, Memory[..readed].Span);
+                            Debug.Assert(UseSize == readed, $"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
+                            var StepData = Memory.ToArray();
+                            StepDataBody.Values = StepData;
+                            Logger.LogResult(nameof(StepDataBody.Values), StepData);
+                        }
+                        break;
+                }
+                if (Size == Length)
+                    return Body;
+                if (Type is ChunkType.TempoTFPSConfig or ChunkType.BiginFinishConfig or ChunkType.StepData)
+                    Logger.LogWarning("{ChunkType} has OtherData", Type);
+                if (Body is IOtherDataBody OtherDataBody)
+                {
+                    var _Size = Size;
+                    var UseSize = Length - _Size;
+                    Size += UseSize;
+                    Debug.Assert(Size <= Length, $"over size exception.Size:{_Size} -> {Size} Length:{Length}");
+                    using var buffer = Pool.Rent(UseSize);
+                    var Memory = buffer.Memory[..UseSize];
+                    var readed = await Stream.ReadAsync(Memory, Token);
+                    Logger.LogReaded(Stream, readed, Memory[..readed].Span);
+                    if (UseSize != readed)
+                        Logger.LogWarning($"readed size is mismatch. UseSize:{UseSize} readed:{readed}");
+                    var OtherData = Memory[..readed].ToArray();
+                    OtherDataBody.Values = OtherData;
+                    Logger.LogResult(nameof(IOtherDataBody.Values), OtherData);
+                }
+                Debug.Assert(Size == Length, $"has no read byte. Size:{Size} Length:{Length}");
+                return Body;
+            }
+        }
+        /// <summary>
+        /// Dispose Async Core
+        /// </summary>
+        /// <returns></returns>
+        protected virtual async ValueTask DisposeAsyncCore()
+        {
+            if (!disposedValue)
+            {
+                if (!LeaveOpen)
+                    await Stream.DisposeAsync();
+                disposedValue = true;
+            }
+        }
+        /// <summary>
+        /// Dispose Async
+        /// </summary>
+        /// <returns></returns>
+        public async ValueTask DisposeAsync()
+        {
+            await DisposeAsyncCore();
+            Dispose(disposing: false);
+#pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
+            // Suppress finalization.
+            GC.SuppressFinalize(this);
+#pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
+        }
+        /// <summary>
+        /// Dispose
+        /// </summary>
+        /// <param name="disposing"></param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (!LeaveOpen)
+                        Stream.Dispose();
+                }
+                disposedValue = true;
+            }
+        }
+        /// <summary>
+        /// destructor
+        /// </summary>
+        ~ChunkReader()
+        {
+            Dispose(disposing: false);
+        }
+        /// <summary>
+        /// Dispose
+        /// </summary>
         public void Dispose()
         {
-            if (!LeaveOpen)
-                Stream.Dispose();
+            // このコードを変更しないでください。クリーンアップ コードを 'Dispose(bool disposing)' メソッドに記述します
+            Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
     }
