@@ -3,7 +3,7 @@ using Ddr.Ssq.Internal;
 
 namespace Ddr.Ssq
 {
-    public enum PlayDifficulty : short
+    public enum PlayDifficulty : byte
     {
         [EnumMember(Value = "Basic")]
         Basic = 0x01,

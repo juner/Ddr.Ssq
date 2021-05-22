@@ -3,7 +3,10 @@ using Ddr.Ssq.Internal;
 
 namespace Ddr.Ssq
 {
-    public enum PlayStyle : short
+    /// <summary>
+    /// Play Style
+    /// </summary>
+    public enum PlayStyle : byte
     {
         [EnumMember(Value = "Single")]
         Single = 0x14,

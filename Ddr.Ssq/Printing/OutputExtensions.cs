@@ -37,7 +37,7 @@ namespace Ddr.Ssq.Printing
                         ChunkType.BiginFinishConfig
                             => $"[param : ({Chunk.Header.Param,4:X}) {Chunk.Header.Param,4}] {string.Empty,14}",
                         ChunkType.StepData
-                            => $"[level : ({Chunk.Header.Param,4:X4}) {Chunk.Header.PlayStyle.ToMemberName(),-8} {Chunk.Header.PlayDifficulty.ToMemberName(),-10}]",
+                            => $"[level : ({Chunk.Header.Param,4:X4}) {Chunk.Header.Play.Style.ToMemberName(),-8} {Chunk.Header.Play.Difficulty.ToMemberName(),-10}]",
                         _
                             => $"[param : ({Chunk.Header.Param,4:X}) {Chunk.Header.Param,4}] {string.Empty,14}",
                     });
@@ -68,7 +68,7 @@ namespace Ddr.Ssq.Printing
                 Builder.AppendLine(Chunk.Header.Type switch
                 {
                     ChunkType.StepData
-                        => $"[[[{(short)Chunk.Header.Type,2:X2}:{Chunk.Header.Type.ToMemberName(),-20}]]] [level : ({Chunk.Header.Param,4:X4}) {Chunk.Header.PlayStyle.ToMemberName(),-8} {Chunk.Header.PlayDifficulty.ToMemberName(),-10}]",
+                        => $"[[[{(short)Chunk.Header.Type,2:X2}:{Chunk.Header.Type.ToMemberName(),-20}]]] [level : ({Chunk.Header.Param,4:X4}) {Chunk.Header.Play.Style.ToMemberName(),-8} {Chunk.Header.Play.Difficulty.ToMemberName(),-10}]",
                     _
                         => $"[[[{(short)Chunk.Header.Type,2:X2}:{Chunk.Header.Type.ToMemberName(),-20}]]]",
                 });
@@ -178,7 +178,7 @@ namespace Ddr.Ssq.Printing
                 var TimeOffset = Body.TimeOffsets[i];
                 var LastTimeOffset = i is 0 ? 0 : Body.TimeOffsets[i - 1];
                 var DeltaOffset = TimeOffset - LastTimeOffset;
-                var Step = Header.PlayStyle switch
+                var Step = Header.Play.Style switch
                 {
                     PlayStyle.Single
                         => new[] { NA, EA, EA, EA, EA, NA, NA, NA, NA, NA, NA, NA, ":  " },
@@ -210,7 +210,7 @@ namespace Ddr.Ssq.Printing
                 {
                     lastStep.Clear();
                     lastCount = 0;
-                    if (Header.PlayStyle
+                    if (Header.Play.Style
                         is PlayStyle.Single
                         or PlayStyle.Double
                         or PlayStyle.Battle) //solo以外
@@ -229,7 +229,7 @@ namespace Ddr.Ssq.Printing
                             { Step[5] = FreezeArrowWord; }
                         }
                     }
-                    if (Header.PlayStyle
+                    if (Header.Play.Style
                         is PlayStyle.Solo)
                     {
                         var s = (SoloStepType)_step;
@@ -241,7 +241,7 @@ namespace Ddr.Ssq.Printing
                         if ((s & SoloPlayerRight) > 0) { Step[5] = RightArrow; }
                     }
 
-                    if (Header.PlayStyle
+                    if (Header.Play.Style
                         is PlayStyle.Double
                         or PlayStyle.Battle)
                     {
