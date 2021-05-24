@@ -63,7 +63,7 @@ namespace Ddr.Ssq
         /// <returns></returns>
         public static ChunkHeader CreateStepData(int Length = 0, StepPlayType Play = default, int Entry = 0)
             => new(Length, ChunkType.StepData, (short)Play, Entry);
-        internal readonly string GetDebuggerDisplay()
+        readonly IEnumerable<string> GetInnerDisplay()
         {
             IEnumerable<string?> members = new[] {
                 Length == 0 ? null : Length>0 ? $"{nameof(Length)}:{Length}" : $"{nameof(LongLength)}:{LongLength}",
@@ -75,7 +75,12 @@ namespace Ddr.Ssq
                 members = members
                     .Append($"{nameof(Play)}.{nameof(Play.Difficulty)}:{Play.Difficulty.ToMemberName()}(0x{(short)Play.Difficulty:X2})")
                     .Append($"{nameof(Play)}.{nameof(Play.Style)}:{Play.Style.ToMemberName()}(0x{(short)Play.Style:X2})");
-            return $"{nameof(ChunkHeader)}{{{string.Join(", ", members)}}}";
+            return members.OfType<string>();
         }
+        internal readonly string GetDebuggerDisplay()
+            => string.Join(", ", GetInnerDisplay());
+        ///<inheritdoc/>
+        public override readonly string ToString()
+            => $"{nameof(ChunkHeader)}{{{string.Join(", ", GetInnerDisplay())}}}";
     }
 }
