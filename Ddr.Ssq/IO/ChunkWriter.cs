@@ -98,6 +98,7 @@ namespace Ddr.Ssq.IO
                 Length = sizeof(int);
             using var Owner = Pool.Rent(Length);
             var Span = Owner.Memory[..Length].Span;
+            InnerWrite(Span, Header, Body);
             Stream.Write(Span);
         }
         /// <summary>
@@ -115,6 +116,7 @@ namespace Ddr.Ssq.IO
                 Length = sizeof(int);
             using var Owner = Pool.Rent(Length);
             var Memory = Owner.Memory[..Length];
+            InnerWrite(Memory.Span, Header, Body);
             return Stream.WriteAsync(Memory, Token);
         }
         static void InnerWrite(Span<byte> Span, ChunkHeader Header, IBody Body)
