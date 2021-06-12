@@ -200,10 +200,6 @@ namespace Ddr.Ssq.AnalyzeTool
                 Console.Error.WriteLine($"input file not found: {InputFullPath}");
                 return -1;
             }
-
-
-
-
             var OutDir = Path.GetDirectoryName(OutputFullPath)!;
             if (!Directory.Exists(OutDir))
                 Directory.CreateDirectory(OutDir);
