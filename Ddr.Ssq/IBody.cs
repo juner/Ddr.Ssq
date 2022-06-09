@@ -1,14 +1,13 @@
-﻿namespace Ddr.Ssq
+﻿namespace Ddr.Ssq;
+
+/// <summary>
+/// Body Interface
+/// </summary>
+public interface IBody
 {
     /// <summary>
-    /// Body Interface
+    /// Get Body Size
     /// </summary>
-    public interface IBody
-    {
-        /// <summary>
-        /// Get Body Size
-        /// </summary>
-        /// <returns></returns>
-        int Size();
-    }
+    /// <returns></returns>
+    int Size();
 }

@@ -13,11 +13,9 @@ await CreateDefaultBuilder(args)
 
 static IHostBuilder CreateDefaultBuilder(string[] args)
     => Host.CreateDefaultBuilder(args)
-    .ConfigureServices((context, services) =>
-    {
-        services.AddOptions<OutputOptions>()
-            .Bind(context.Configuration.GetSection("Output"));
-    })
+    .ConfigureServices((context, services) 
+        => services.AddOptions<OutputOptions>()
+            .Bind(context.Configuration.GetSection("Output")))
     .ConfigureLogging((context, builder) =>
     {
         builder.ClearProviders();

@@ -1,9 +1,9 @@
 <Project>
   <ItemGroup>
     <PackageReference Update="ConsoleAppFramework" Version="3.2.0" />
-    <PackageReference Update="Microsoft.Extensions.Configuration.UserSecrets" Version="5.0.0" />
-    <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
-    <PackageReference Update="System.Text.Encoding.CodePages" Version="5.0.0" />
-    <PackageReference Update="Microsoft.Extensions.Options" />
+    <PackageReference Update="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
+    <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
+    <PackageReference Update="System.Text.Encoding.CodePages" Version="6.0.0" />
+    <PackageReference Update="Microsoft.Extensions.Options" Version="6.0.0" />
   </ItemGroup>
 </Project>

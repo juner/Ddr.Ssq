@@ -1,13 +1,12 @@
-﻿namespace Ddr.Ssq
+﻿namespace Ddr.Ssq;
+
+/// <summary>
+/// Time Offset Body Interface
+/// </summary>
+public interface ITimeOffsetBody : IBody
 {
     /// <summary>
-    /// Time Offset Body Interface
+    /// TimeOffsets
     /// </summary>
-    public interface ITimeOffsetBody : IBody
-    {
-        /// <summary>
-        /// TimeOffsets
-        /// </summary>
-        int[] TimeOffsets { get; set; }
-    }
+    int[] TimeOffsets { get; set; }
 }

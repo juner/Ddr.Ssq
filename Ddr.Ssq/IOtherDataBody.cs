@@ -1,13 +1,12 @@
-﻿namespace Ddr.Ssq
+﻿namespace Ddr.Ssq;
+
+/// <summary>
+/// Other Data Body
+/// </summary>
+public interface IOtherDataBody
 {
     /// <summary>
-    /// Other Data Body
+    /// Other Data Bytes
     /// </summary>
-    public interface IOtherDataBody
-    {
-        /// <summary>
-        /// Other Data Bytes
-        /// </summary>
-        byte[] Values { get; set; }
-    }
+    byte[] Values { get; set; }
 }

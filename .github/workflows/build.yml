@@ -31,9 +31,6 @@ jobs:
     - name: Publish (x64) has runtime
       run: dotnet publish ./Ddr.Ssq.AnalyzeTool/ -c Release -o ./publish_64_r -p:PublishSingleFile=true -r win10-x64 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
       
-    - name: Publish (x86) has runtime
-      run: dotnet publish ./Ddr.Ssq.AnalyzeTool/ -c Release -o ./publish_86_r -p:PublishSingleFile=true -r win10-x86 -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true
-      
     - name: Publish (x64)
       run: dotnet publish ./Ddr.Ssq.AnalyzeTool/ -c Release -o ./publish_64 -p:PublishSingleFile=true -r win10-x64 --self-contained false -p:IncludeNativeLibrariesForSelfExtract=true
       
@@ -50,11 +47,6 @@ jobs:
       with:
         name: Publish (x64) has runtime
         path: ./publish_64_r/
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: Publish (x86) has runtime
-        path: ./publish_86_r/
 
     - uses: actions/upload-artifact@v2
       with:
