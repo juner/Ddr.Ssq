@@ -1,9 +1,13 @@
 <Project>
   <ItemGroup>
-    <PackageReference Update="ConsoleAppFramework" Version="3.2.0" />
-    <PackageReference Update="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
-    <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
-    <PackageReference Update="System.Text.Encoding.CodePages" Version="6.0.0" />
-    <PackageReference Update="Microsoft.Extensions.Options" Version="6.0.0" />
+    <PackageReference Update="ConsoleAppFramework" Version="4.2.4" />
+    <PackageReference Update="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0-rc.1.23419.4" />
+    <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0-rc.1.23419.4" />
+    <PackageReference Update="System.Text.Encoding.CodePages" Version="8.0.0-rc.1.23419.4" />
+    <PackageReference Update="Microsoft.Extensions.Options" Version="8.0.0-rc.1.23419.4" />
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.8.0-preview-23424-02" />
+    <PackageReference Update="MSTest.TestAdapter" Version="3.1.1" />
+    <PackageReference Update="MSTest.TestFramework" Version="3.1.1" />
+    <PackageReference Update="coverlet.collector" Version="6.0.0" />
   </ItemGroup>
 </Project>

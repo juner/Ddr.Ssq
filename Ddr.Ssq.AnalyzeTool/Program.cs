@@ -1,11 +1,10 @@
 ﻿using System.Linq;
 using System.Text;
-using ConsoleAppFramework;
-using Ddr.Ssq.AnalyzeTool;
 using Ddr.Ssq.Printing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using ConsoleApp = Ddr.Ssq.AnalyzeTool.ConsoleApp;
 
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 await CreateDefaultBuilder(args)
@@ -13,7 +12,7 @@ await CreateDefaultBuilder(args)
 
 static IHostBuilder CreateDefaultBuilder(string[] args)
     => Host.CreateDefaultBuilder(args)
-    .ConfigureServices((context, services) 
+    .ConfigureServices((context, services)
         => services.AddOptions<OutputOptions>()
             .Bind(context.Configuration.GetSection("Output")))
     .ConfigureLogging((context, builder) =>
