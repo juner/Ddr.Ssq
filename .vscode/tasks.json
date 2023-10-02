@@ -53,6 +53,17 @@
             "problemMatcher": "$msCompile"
         },
         {
+          "label": "test to generate coverage",
+          "command": "dotnet",
+          "type": "shell",
+          "args": [
+            "reportgenerator",
+            "-reports:${workspaceFolder}/*.Tests/TestResults/*/*.cobertura.xml",
+            "-targetdir:${workspaceFolder}/TestResults/coveragereport",
+            "-reporttype:Html",
+          ],
+        },
+        {
             "label": "tool restore",
             "command": "dotnet",
             "type": "shell",
